@@ -1,4 +1,3 @@
-// src/app/dashboard/[project]/page.tsx
 "use client";
 
 import Navbar from "@/components/layout/Navbar";
