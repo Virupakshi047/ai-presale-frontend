@@ -1,5 +1,6 @@
 "use client";
 import React, { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 
 interface Technology {
   name: string;
@@ -19,7 +20,8 @@ interface AITechStackProps {
 }
 
 const AITechStack: React.FC<AITechStackProps> = ({ projectId }) => {
-  const [techStackData, setTechStackData] = useState<TechStackData>({
+  const router = useRouter();
+  const [techStackData, setTechStackData] = useState<TechStackData | null>({
     frontend: [
       {
         name: "React",
@@ -56,10 +58,24 @@ const AITechStack: React.FC<AITechStackProps> = ({ projectId }) => {
       // ... other technologies
     ],
   });
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    // API call will go here
-    console.log("Fetching data for project:", projectId);
+    const fetchTechStack = async () => {
+      try {
+        // Simulating API call
+        console.log("Fetching data for project:", projectId);
+        // Replace with actual API call
+        setIsLoading(false);
+        // If no data, setTechStackData(null)
+      } catch (error) {
+        console.error("Error fetching tech stack:", error);
+        setTechStackData(null);
+        setIsLoading(false);
+      }
+    };
+
+    fetchTechStack();
   }, [projectId]);
 
   const categories = [
@@ -69,6 +85,59 @@ const AITechStack: React.FC<AITechStackProps> = ({ projectId }) => {
     { id: 4, key: "API_integrations", title: "API Integrations" },
     { id: 5, key: "others", title: "Others" },
   ];
+
+  if (isLoading) {
+    return (
+      <div className="max-w-7xl mx-auto p-8">
+        <div className="text-center py-16">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+          <p className="mt-4 text-gray-600">
+            Loading tech stack recommendations...
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  const isTechStackEmpty =
+    !techStackData ||
+    Object.values(techStackData).every((arr) => arr.length === 0);
+
+  if (isTechStackEmpty) {
+    return (
+      <div className="max-w-7xl mx-auto p-8">
+        <div className="text-center py-16 bg-white rounded-lg shadow-md">
+          <h2 className="text-2xl font-bold text-gray-800 mb-4">
+            Requirements Analysis Required
+          </h2>
+          <p className="text-gray-600 mb-8">
+            Please complete the requirements analysis first to generate the tech
+            stack recommendations.
+          </p>
+          <button
+            onClick={() => router.push("/dashboard")}
+            className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-200 flex items-center gap-2 mx-auto"
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              className="h-5 w-5"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M10 19l-7-7m0 0l7-7m-7 7h18"
+              />
+            </svg>
+            Go to Requirements Analysis
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-7xl mx-auto p-8">
@@ -105,10 +174,8 @@ const AITechStack: React.FC<AITechStackProps> = ({ projectId }) => {
                     <span className="px-4 py-2 bg-gray-100 text-gray-700 rounded-full text-sm hover:bg-gray-200 transition-colors duration-200 cursor-pointer">
                       {tech.name}
                     </span>
-                    {/* Tooltip */}
                     <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-gray-900 text-white text-xs rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 whitespace-nowrap pointer-events-none">
                       {tech.description}
-                      {/* Arrow */}
                       <div className="absolute bottom-[-4px] left-1/2 transform -translate-x-1/2 w-2 h-2 bg-gray-900 rotate-45"></div>
                     </div>
                   </div>
