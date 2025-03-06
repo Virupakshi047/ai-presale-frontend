@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { usePathname } from "next/navigation";
 import RequirementAnalyzer from "../features/RequirementAnalyzer";
+import AITechStack from "../features/TechStack";
 
 export default function MainBody() {
   const [activeTab, setActiveTab] = useState("requirementAnalysis");
@@ -48,9 +49,7 @@ export default function MainBody() {
 
       <div>
         {activeTab === "requirementAnalysis" && <RequirementAnalyzer />}
-        {activeTab === "feature1" && (
-          <div>Feature 1 Content for {projectName}</div>
-        )}
+        {activeTab === "feature1" && <AITechStack projectId={projectName} />}
         {activeTab === "feature2" && (
           <div>Feature 2 Content for {projectName}</div>
         )}
