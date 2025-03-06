@@ -15,13 +15,13 @@ export default function MainBody() {
     <div className="p-6">
       <h1 className="text-3xl font-bold mb-6">Project name</h1>
       
-      <div className="mb-4 border-b">
+      <div className="mb-4 border-b ">
         <nav className="flex space-x-4">
           {tabs.map((tab) => (
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
-              className={`py-2 px-4 ${
+              className={`py-2 px-4 cursor-pointer ${
                 activeTab === tab.id 
                   ? 'border-b-2 border-blue-500 text-blue-600' 
                   : 'text-gray-500'

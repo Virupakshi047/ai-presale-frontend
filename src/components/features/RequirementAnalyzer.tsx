@@ -1,7 +1,7 @@
 export default function RequirementAnalyzer() {
     return (
       <div className="p-6 bg-white shadow-md rounded-lg">
-        <h2 className="text-2xl font-bold mb-4">Input Requirements</h2>
+        <h2 className="text-2xl font-bold mb-4 ">Input Requirements</h2>
         
         <div 
           className="border-2 border-dashed p-6 text-center rounded-2xl"
@@ -49,7 +49,7 @@ export default function RequirementAnalyzer() {
   
         <div className="mt-6">
           <h3 className="text-lg font-semibold mb-2">Analysis Results</h3>
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-3 gap-4">
             <div>
               <h4 className="font-medium">Functional Requirements</h4>
               {/* Placeholder for results */}
@@ -57,6 +57,10 @@ export default function RequirementAnalyzer() {
             <div>
               <h4 className="font-medium">Non-Functional Requirements</h4>
               {/* Placeholder for results */}
+            </div>
+            <div>
+              <h4 className="font-medium">Feature break down</h4>
+              
             </div>
           </div>
         </div>
