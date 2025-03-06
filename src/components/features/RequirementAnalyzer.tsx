@@ -1,6 +1,12 @@
 "use client";
 
 import { useState } from "react";
+import { useState as useHoverState } from "react";
+
+interface ActiveFeature {
+  index: number | null;
+  description: string;
+}
 
 interface FeatureBreakdown {
   component: string;
@@ -148,6 +154,10 @@ export default function RequirementAnalyzer() {
   };
 
   const renderAnalysisResults = () => {
+    const [activeFeature, setActiveFeature] = useState<ActiveFeature>({
+      index: null,
+      description: "",
+    });
     if (!analysisResults) return null;
 
     return (
@@ -210,7 +220,7 @@ export default function RequirementAnalyzer() {
 
         {/* Feature Breakdown */}
         <div className="bg-white p-6 rounded-lg shadow-md">
-          <h3 className="text-xl font-semibold text-gray-700 mb-4 flex items-center">
+          <h3 className="text-xl font-semibold text-gray-700 mb-6 flex items-center">
             <svg
               className="w-6 h-6 mr-2 text-green-500"
               fill="none"
@@ -226,16 +236,39 @@ export default function RequirementAnalyzer() {
             </svg>
             Feature Breakdown
           </h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {analysisResults.featureBreakdown.map((feature, index) => (
               <div
                 key={index}
-                className="p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
+                className="relative group"
+                onClick={() => {
+                  if (window.innerWidth < 1024) {
+                    // mobile devices
+                    setActiveFeature((prev) => ({
+                      index: prev.index === index ? null : index,
+                      description: feature.description,
+                    }));
+                  }
+                }}
               >
-                <h4 className="font-medium text-gray-800 mb-2">
-                  {feature.component}
-                </h4>
-                <p className="text-gray-600 text-sm">{feature.description}</p>
+                <div className="p-4 border border-gray-200 rounded-lg hover:border-blue-500 transition-all duration-200 cursor-pointer bg-white">
+                  <h4 className="font-medium text-gray-800 text-center">
+                    {feature.component}
+                  </h4>
+
+                  {/* Desktop Hover Tooltip */}
+                  <div className="hidden lg:group-hover:block absolute z-10 w-64 p-4 mt-2 bg-gray-900 text-white text-sm rounded-lg shadow-lg -translate-x-1/4 left-1/2 transform opacity-0 group-hover:opacity-100 transition-all duration-200">
+                    {feature.description}
+                    <div className="absolute -top-2 left-1/2 transform -translate-x-1/2 w-0 h-0 border-8 border-transparent border-b-gray-900" />
+                  </div>
+
+                  {/* Mobile Click Description */}
+                  {activeFeature.index === index && (
+                    <div className="lg:hidden mt-2 p-2 text-sm text-gray-600 border-t border-gray-200">
+                      {feature.description}
+                    </div>
+                  )}
+                </div>
               </div>
             ))}
           </div>
@@ -294,7 +327,7 @@ export default function RequirementAnalyzer() {
           value={requirementText}
           onChange={handleTextChange}
           placeholder="Paste additional requirements text here... (optional)"
-          className="w-full p-2 border rounded min-h-[100px] rounded-2xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+          className="w-full p-2 border min-h-[100px] rounded-2xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
         />
       </div>
 
