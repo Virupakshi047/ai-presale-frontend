@@ -1,7 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { useState as useHoverState } from "react";
+// import { useState as useHoverState } from "react";
+import { useProject } from "@/context/ProjectContext";
 
 interface ActiveFeature {
   index: number | null;
@@ -32,6 +33,7 @@ interface AnalysisResponse {
 }
 
 export default function RequirementAnalyzer() {
+  const { currentProject } = useProject();
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [requirementText, setRequirementText] = useState<string>("");
   const [error, setError] = useState<string>("");
@@ -40,6 +42,10 @@ export default function RequirementAnalyzer() {
   const [analysisResults, setAnalysisResults] = useState<AnalysisResult | null>(
     null
   );
+  const [activeFeature, setActiveFeature] = useState<ActiveFeature>({
+    index: null,
+    description: "",
+  });
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setError("");
@@ -70,6 +76,11 @@ export default function RequirementAnalyzer() {
       return;
     }
 
+    if (!currentProject) {
+      setError("Please select a project first");
+      return;
+    }
+
     setIsLoading(true);
     setError("");
     setSuccess("");
@@ -77,7 +88,7 @@ export default function RequirementAnalyzer() {
     const formData = new FormData();
     formData.append("file", selectedFile);
     formData.append("requirementText", requirementText);
-    formData.append("projectId", "67c953ecd0342501668135e5");
+    formData.append("projectId", currentProject._id);
 
     try {
       const response = await fetch(
@@ -96,7 +107,7 @@ export default function RequirementAnalyzer() {
       console.log(response);
 
       if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+        throw new Error(`Please Upload a file`);
       }
 
       const result: AnalysisResponse = await response.json();
@@ -119,12 +130,16 @@ export default function RequirementAnalyzer() {
   };
 
   const handleGetResults = async () => {
+    if (!currentProject) {
+      setError("Please select a project first");
+      return;
+    }
     setIsLoading(true);
     setError("");
 
     try {
       const response = await fetch(
-        "http://localhost:8080/requirment-analysis/67c9c3c045c5ed5903c5787a",
+        `http://localhost:8080/requirment-analysis/${currentProject._id}`,
         {
           method: "GET",
           credentials: "include",
@@ -154,12 +169,7 @@ export default function RequirementAnalyzer() {
   };
 
   const renderAnalysisResults = () => {
-    const [activeFeature, setActiveFeature] = useState<ActiveFeature>({
-      index: null,
-      description: "",
-    });
     if (!analysisResults) return null;
-
     return (
       <div className="mt-8 space-y-6">
         <h2 className="text-2xl font-bold text-gray-800">Analysis Results</h2>
@@ -276,6 +286,15 @@ export default function RequirementAnalyzer() {
       </div>
     );
   };
+  if (!currentProject) {
+    return (
+      <div className="p-6 bg-white shadow-md rounded-lg">
+        <div className="text-center text-gray-600">
+          Please select a project to proceed
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="p-6 bg-white shadow-md rounded-lg">
