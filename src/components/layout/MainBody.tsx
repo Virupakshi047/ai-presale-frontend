@@ -48,7 +48,6 @@ export default function MainBody() {
   const tabs = [
     { id: "requirementAnalysis", label: "Requirement Analysis" },
     { id: "feature1", label: "AI Tech-stack" },
-    { id: "feature2", label: "Feature 2" },
   ];
   const handleAnalysisResults = (results: AnalysisResult) => {
     setAnalysisResults(results);

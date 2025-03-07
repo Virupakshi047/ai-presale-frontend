@@ -2,10 +2,33 @@
 import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useProject } from "@/context/ProjectContext";
+import MermaidDiagram from "../ui/MermaidDiagram";
+import { convertJsonToMermaid } from "@/utils/mermaidConverter";
 
 interface Technology {
   name: string;
   description: string;
+}
+
+interface ArchitectureResponse {
+  message: string;
+  diagram: {
+    nodes: Array<{
+      id: string;
+      attributes: {
+        type?: string;
+        technology?: string;
+        components?: string[];
+      };
+    }>;
+    edges: Array<{
+      source: string;
+      target: string;
+      attributes: {
+        protocol: string;
+      };
+    }>;
+  };
 }
 
 interface TechStackData {
@@ -38,6 +61,8 @@ const AITechStack: React.FC = () => {
   );
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string>("");
+  const [architectureData, setArchitectureData] =
+    useState<ArchitectureResponse | null>(null);
 
   useEffect(() => {
     const fetchTechStack = async () => {
@@ -76,6 +101,45 @@ const AITechStack: React.FC = () => {
 
     fetchTechStack();
   }, [currentProject?._id]);
+
+  useEffect(() => {
+    const fetchArchitecture = async () => {
+      if (!currentProject?._id) {
+        setIsLoading(false);
+        return;
+      }
+
+      try {
+        const response = await fetch(
+          `http://localhost:8080/tech-architecture/generate-architecture-diagram/${currentProject._id}`,
+          {
+            credentials: "include",
+            headers: {
+              Accept: "application/json",
+            },
+          }
+        );
+
+        if (!response.ok) {
+          throw new Error("Failed to fetch architecture");
+        }
+
+        const data: ArchitectureResponse = await response.json();
+        setArchitectureData(data);
+      } catch (error) {
+        console.error("Error fetching architecture:", error);
+        setError(
+          error instanceof Error ? error.message : "Error fetching architecture"
+        );
+      }
+    };
+
+    fetchArchitecture();
+  }, [currentProject?._id]);
+
+  const mermaidDiagram = architectureData
+    ? convertJsonToMermaid(architectureData)
+    : "";
 
   const categories = [
     { id: 1, key: "frontend", title: "Frontend" },
@@ -161,11 +225,10 @@ const AITechStack: React.FC = () => {
         <h3 className="text-xl font-semibold text-gray-700 mb-4">
           System Architecture
         </h3>
-        <div className="w-full h-96 bg-gray-50 rounded-lg overflow-hidden">
-          <img
-            src="/dummy-architecture.png"
-            alt="System Architecture"
-            className="w-full h-full object-contain"
+        <div className="w-full h-full bg-gray-50 rounded-lg overflow-hidden">
+          <MermaidDiagram
+            chart={mermaidDiagram || "graph LR\nA[Loading...]"}
+            className="flex items-center justify-center"
           />
         </div>
       </div>
