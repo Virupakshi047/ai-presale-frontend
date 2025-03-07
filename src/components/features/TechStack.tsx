@@ -1,6 +1,7 @@
 "use client";
 import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { useProject } from "@/context/ProjectContext";
 
 interface Technology {
   name: string;
@@ -15,68 +16,66 @@ interface TechStackData {
   others: Technology[];
 }
 
-interface AITechStackProps {
-  projectId: string;
+interface TechStackResponse {
+  message: string;
+  techStack: {
+    _id: string;
+    frontend: Technology[];
+    backend: Technology[];
+    database: Technology[];
+    API_integrations: Technology[];
+    others: Technology[];
+    createdAt: string;
+    __v: number;
+  };
 }
 
-const AITechStack: React.FC<AITechStackProps> = ({ projectId }) => {
+const AITechStack: React.FC = () => {
   const router = useRouter();
-  const [techStackData, setTechStackData] = useState<TechStackData | null>({
-    frontend: [
-      {
-        name: "React",
-        description:
-          "Versatile, efficient, and widely-used for building user interfaces",
-      },
-      // ... other frontend technologies
-    ],
-    backend: [
-      {
-        name: "Node.js",
-        description: "For building the server-side application",
-      },
-      // ... other backend technologies
-    ],
-    database: [
-      {
-        name: "MongoDB",
-        description: "For storing and retrieving data, flexible schema design",
-      },
-    ],
-    API_integrations: [
-      {
-        name: "FIFA API",
-        description: "For data provider integration",
-      },
-      // ... other API integrations
-    ],
-    others: [
-      {
-        name: "Jest",
-        description: "For testing the frontend and backend",
-      },
-      // ... other technologies
-    ],
-  });
+  const { currentProject } = useProject();
+  const [techStackData, setTechStackData] = useState<TechStackData | null>(
+    null
+  );
   const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string>("");
 
   useEffect(() => {
     const fetchTechStack = async () => {
-      try {
-        // Simulating API call
-        console.log("Fetching data for project:", projectId);
-        // Replace with actual API call
+      if (!currentProject?._id) {
         setIsLoading(false);
-        // If no data, setTechStackData(null)
+        return;
+      }
+
+      try {
+        const response = await fetch(
+          `http://localhost:8080/tech-architecture/generate-tech-stack/${currentProject._id}`,
+          {
+            credentials: "include",
+            headers: {
+              Accept: "application/json",
+            },
+          }
+        );
+
+        if (!response.ok) {
+          throw new Error("Failed to fetch tech stack");
+        }
+
+        const data: TechStackResponse = await response.json();
+        setTechStackData(data.techStack);
       } catch (error) {
         console.error("Error fetching tech stack:", error);
+        setError(
+          error instanceof Error ? error.message : "Error fetching tech stack"
+        );
         setTechStackData(null);
+      } finally {
         setIsLoading(false);
       }
     };
 
     fetchTechStack();
-  }, [projectId]);
+  }, [currentProject?._id]);
 
   const categories = [
     { id: 1, key: "frontend", title: "Frontend" },
@@ -99,6 +98,19 @@ const AITechStack: React.FC<AITechStackProps> = ({ projectId }) => {
     );
   }
 
+  if (error) {
+    return (
+      <div className="max-w-7xl mx-auto p-8">
+        <div className="text-center py-16 bg-white rounded-lg shadow-md">
+          <h2 className="text-2xl font-bold text-red-800 mb-4">
+            Error Loading Tech Stack
+          </h2>
+          <p className="text-gray-600 mb-8">{error}</p>
+        </div>
+      </div>
+    );
+  }
+
   const isTechStackEmpty =
     !techStackData ||
     Object.values(techStackData).every((arr) => arr.length === 0);
@@ -115,7 +127,7 @@ const AITechStack: React.FC<AITechStackProps> = ({ projectId }) => {
             stack recommendations.
           </p>
           <button
-            onClick={() => router.push("/dashboard")}
+            onClick={() => router.push("/requirements")}
             className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-200 flex items-center gap-2 mx-auto"
           >
             <svg

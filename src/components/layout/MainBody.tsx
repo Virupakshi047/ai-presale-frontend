@@ -97,7 +97,7 @@ export default function MainBody() {
       <div>
         {activeTab === "requirementAnalysis" && <RequirementAnalyzer />}
         {activeTab === "feature1" && (
-          <AITechStack projectId={currentProject?.name || ""} />
+          <AITechStack/>
         )}
         {activeTab === "feature2" && (
           <div>Feature 2 Content for {currentProject?.name || ""}</div>
