@@ -12,6 +12,7 @@ const MermaidDiagram: React.FC<MermaidDiagramProps> = ({
   className,
 }) => {
   const elementRef = useRef<HTMLDivElement>(null);
+  console.log("Rendering MermaidDiagram with chart:", chart);
 
   useEffect(() => {
     mermaid.initialize({

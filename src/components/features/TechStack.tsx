@@ -56,89 +56,89 @@ interface TechStackResponse {
 const AITechStack: React.FC = () => {
   const router = useRouter();
   const { currentProject } = useProject();
-  const [techStackData, setTechStackData] = useState<TechStackData | null>(
-    null
-  );
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string>("");
-  const [architectureData, setArchitectureData] =
-    useState<ArchitectureResponse | null>(null);
+  const [data, setData] = useState<{
+    techStack: TechStackData | null;
+    architecture: ArchitectureResponse | null;
+  }>({
+    techStack: null,
+    architecture: null,
+  });
 
   useEffect(() => {
-    const fetchTechStack = async () => {
+    console.log("Fetching data..."); // Debug log
+    let isMounted = true; // For cleanup
+
+    const fetchData = async () => {
       if (!currentProject?._id) {
         setIsLoading(false);
         return;
       }
 
+      setIsLoading(true);
       try {
-        const response = await fetch(
-          `http://localhost:8080/tech-architecture/generate-tech-stack/${currentProject._id}`,
-          {
-            credentials: "include",
-            headers: {
-              Accept: "application/json",
-            },
-          }
-        );
+        const [techStackResponse, architectureResponse] = await Promise.all([
+          fetch(
+            `http://localhost:8080/tech-architecture/generate-tech-stack/${currentProject._id}`,
+            {
+              credentials: "include",
+              headers: {
+                Accept: "application/json",
+              },
+            }
+          ),
+          fetch(
+            `http://localhost:8080/tech-architecture/generate-architecture-diagram/${currentProject._id}`,
+            {
+              credentials: "include",
+              headers: {
+                Accept: "application/json",
+              },
+            }
+          ),
+        ]);
 
-        if (!response.ok) {
-          throw new Error("Failed to fetch tech stack");
+        if (!techStackResponse.ok || !architectureResponse.ok) {
+          throw new Error("Failed to fetch data");
         }
 
-        const data: TechStackResponse = await response.json();
-        setTechStackData(data.techStack);
+        const [techStackData, architectureData] = await Promise.all([
+          techStackResponse.json(),
+          architectureResponse.json(),
+        ]);
+
+        if (isMounted) {
+          // Single state update instead of multiple
+          setData({
+            techStack: techStackData.techStack,
+            architecture: architectureData,
+          });
+        }
       } catch (error) {
-        console.error("Error fetching tech stack:", error);
-        setError(
-          error instanceof Error ? error.message : "Error fetching tech stack"
-        );
-        setTechStackData(null);
+        console.error("Error fetching data:", error);
+        if (isMounted) {
+          setError(
+            error instanceof Error ? error.message : "Error fetching data"
+          );
+          setData({ techStack: null, architecture: null });
+        }
       } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchTechStack();
-  }, [currentProject?._id]);
-
-  useEffect(() => {
-    const fetchArchitecture = async () => {
-      if (!currentProject?._id) {
-        setIsLoading(false);
-        return;
-      }
-
-      try {
-        const response = await fetch(
-          `http://localhost:8080/tech-architecture/generate-architecture-diagram/${currentProject._id}`,
-          {
-            credentials: "include",
-            headers: {
-              Accept: "application/json",
-            },
-          }
-        );
-
-        if (!response.ok) {
-          throw new Error("Failed to fetch architecture");
+        if (isMounted) {
+          setIsLoading(false);
         }
-
-        const data: ArchitectureResponse = await response.json();
-        setArchitectureData(data);
-      } catch (error) {
-        console.error("Error fetching architecture:", error);
-        setError(
-          error instanceof Error ? error.message : "Error fetching architecture"
-        );
       }
     };
 
-    fetchArchitecture();
+    fetchData();
+
+    return () => {
+      isMounted = false; // Cleanup
+    };
   }, [currentProject?._id]);
 
-  const mermaidDiagram = architectureData
-    ? convertJsonToMermaid(architectureData)
+  const mermaidDiagram = data.architecture
+    ? convertJsonToMermaid(data.architecture)
     : "";
 
   const categories = [
@@ -176,8 +176,8 @@ const AITechStack: React.FC = () => {
   }
 
   const isTechStackEmpty =
-    !techStackData ||
-    Object.values(techStackData).every((arr) => arr.length === 0);
+    !data.techStack ||
+    Object.values(data.techStack).every((arr) => arr.length === 0);
 
   if (isTechStackEmpty) {
     return (
@@ -243,7 +243,7 @@ const AITechStack: React.FC = () => {
               {category.title}
             </h3>
             <div className="flex flex-wrap gap-2">
-              {techStackData[category.key as keyof TechStackData]?.map(
+              {data.techStack?.[category.key as keyof TechStackData]?.map(
                 (tech, index) => (
                   <div key={index} className="relative group">
                     <span className="px-4 py-2 bg-gray-100 text-gray-700 rounded-full text-sm hover:bg-gray-200 transition-colors duration-200 cursor-pointer">
