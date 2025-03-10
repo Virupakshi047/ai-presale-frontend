@@ -233,26 +233,23 @@ const AITechStack: React.FC = () => {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         {categories.map((category) => (
-          <div
-            key={category.id}
-            className="bg-white rounded-lg shadow-md p-6 transition-transform duration-200 hover:-translate-y-1"
-          >
-            <h3 className="text-lg font-semibold text-gray-700 pb-2 mb-4 border-b-2 border-gray-100">
+          <div key={category.id} className="bg-white rounded-lg shadow-md p-6">
+            <h3 className="text-xl font-semibold text-gray-700 pb-2 mb-4 border-b-2 border-gray-100">
               {category.title}
             </h3>
-            <div className="flex flex-wrap gap-2">
+            <div className="space-y-4">
               {data.techStack?.[category.key as keyof TechStackData]?.map(
                 (tech, index) => (
-                  <div key={index} className="relative group">
-                    <span className="px-4 py-2 bg-gray-100 text-gray-700 rounded-full text-sm hover:bg-gray-200 transition-colors duration-200 cursor-pointer">
-                      {tech.name}
-                    </span>
-                    <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-gray-900 text-white text-xs rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 whitespace-nowrap pointer-events-none">
-                      {tech.description}
-                      <div className="absolute bottom-[-4px] left-1/2 transform -translate-x-1/2 w-2 h-2 bg-gray-900 rotate-45"></div>
+                  <div key={index} className="bg-gray-50 rounded-lg p-4">
+                    <div className="flex items-center gap-2 mb-2">
+                      {/* You can add tech icons here using a library like react-icons */}
+                      <span className="font-medium text-gray-800">
+                        {tech.name}
+                      </span>
                     </div>
+                    <p className="text-sm text-gray-600">{tech.description}</p>
                   </div>
                 )
               )}
