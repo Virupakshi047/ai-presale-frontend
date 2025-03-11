@@ -9,6 +9,7 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "framer-motion": "^12.5.0",
     "frontend": "file:",
     "lucide-react": "^0.477.0",
     "mermaid": "^11.4.1",
