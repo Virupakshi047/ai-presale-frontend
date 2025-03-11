@@ -2,6 +2,7 @@
 
 import { useRouter, usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
+import Hamburger from "../ui/Hamburger";
 
 interface Project {
   _id: string;
@@ -16,6 +17,7 @@ export default function Sidebar() {
   const [projects, setProjects] = useState<Project[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string>("");
+  const [isOpen, setIsOpen] = useState(false);
 
   const router = useRouter();
   const pathname = usePathname();
@@ -60,36 +62,66 @@ export default function Sidebar() {
       "";
   }
 
-  return (
-    <div className="w-64 bg-gray-100 p-4 h-full">
-      <h2 className="text-xl font-bold mb-4">Projects</h2>
+  // Add click handler for mobile overlay
+  const handleOverlayClick = () => {
+    setIsOpen(false);
+  };
 
-      {isLoading ? (
-        <div className="flex items-center justify-center p-4">
-          <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-500"></div>
-        </div>
-      ) : error ? (
-        <div className="text-red-500 p-2">{error}</div>
-      ) : (
-        <ul>
-          {projects.map((project) => (
-            <li
-              key={project._id}
-              className={`p-2 rounded cursor-pointer mb-2 ${
-                activeProject === project.name
-                  ? "bg-blue-100 text-blue-700 font-medium"
-                  : "hover:bg-gray-200"
-              }`}
-              onClick={() => {
-                const encodedProject = encodeURIComponent(project.name);
-                router.push(`/dashboard/${encodedProject}`);
-              }}
-            >
-              {project.name}
-            </li>
-          ))}
-        </ul>
+  return (
+    <>
+      {/* Mobile Overlay */}
+      {isOpen && (
+        <div
+          className="fixed inset-0 bg-black/30 backdrop-blur-sm z-30 lg:hidden"
+          onClick={handleOverlayClick}
+        />
       )}
-    </div>
+
+      {/* Hamburger Menu - Increased z-index */}
+      <div className="fixed top-4 left-4 z-40 lg:hidden">
+        <Hamburger isOpen={isOpen} onClick={() => setIsOpen(!isOpen)} />
+      </div>
+
+      {/* Sidebar - Adjusted z-index and added proper height constraints */}
+      <div
+        className={`fixed  lg:static w-64 bg-gray-100 min-h-screen overflow-y-auto 
+        p-4 transform transition-transform duration-300 ease-in-out z-35
+        ${isOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"}
+        shadow-lg lg:shadow-none`}
+      >
+        <div className="flex items-center justify-between mb-4 sticky top-0 bg-gray-100 py-2">
+          <h2 className="text-xl font-bold">Projects</h2>
+        </div>
+
+        {isLoading ? (
+          <div className="flex items-center justify-center p-4">
+            <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-500" />
+          </div>
+        ) : error ? (
+          <div className="text-red-500 p-2">{error}</div>
+        ) : (
+          <ul className="space-y-2">
+            {projects.map((project) => (
+              <li
+                key={project._id}
+                className={`p-3 rounded-lg cursor-pointer transition-all duration-200
+                ${
+                  activeProject === project.name
+                    ? "bg-blue-100 text-blue-700 font-medium shadow-sm"
+                    : "hover:bg-gray-200"
+                }`}
+                onClick={() => {
+                  const encodedProject = encodeURIComponent(project.name);
+                  router.push(`/dashboard/${encodedProject}`);
+                  setIsOpen(false); // Close sidebar on mobile after selection
+                }}
+              >
+                {project.name}
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
+    </>
   );
 }

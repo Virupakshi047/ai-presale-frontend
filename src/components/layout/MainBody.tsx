@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import RequirementAnalyzer from "../features/RequirementAnalyzer";
 import AITechStack from "../features/TechStack";
 import { useProject } from "@/context/ProjectContext";
+import AIBusinessAnalyst from "../features/AIBusinessAnalyst";
 
 interface FeatureBreakdown {
   component: string;
@@ -48,6 +49,7 @@ export default function MainBody() {
   const tabs = [
     { id: "requirementAnalysis", label: "Requirement Analysis" },
     { id: "feature1", label: "AI Tech-stack" },
+    { id: "feature2", label: "AI Business Analyst" },
   ];
   const handleAnalysisResults = (results: AnalysisResult) => {
     setAnalysisResults(results);
@@ -95,12 +97,8 @@ export default function MainBody() {
 
       <div>
         {activeTab === "requirementAnalysis" && <RequirementAnalyzer />}
-        {activeTab === "feature1" && (
-          <AITechStack/>
-        )}
-        {activeTab === "feature2" && (
-          <div>Feature 2 Content for {currentProject?.name || ""}</div>
-        )}
+        {activeTab === "feature1" && <AITechStack />}
+        {activeTab === "feature2" && <AIBusinessAnalyst />}
       </div>
     </div>
   );
