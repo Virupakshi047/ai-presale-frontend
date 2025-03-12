@@ -307,21 +307,25 @@ export default function RequirementAnalyzer() {
                         </div>
 
                         {/* Collapsible Subfeatures */}
-                        {isActive && feature.subfeatures?.length > 0 && (
-                          <ul className="mt-2 space-y-2 bg-gray-50 p-3 rounded-lg">
-                            {feature.subfeatures.map((subfeature, subIndex) => (
-                              <li
-                                key={subIndex}
-                                className="text-sm text-gray-700 pl-4 border-l-2 border-gray-300"
-                              >
-                                <span className="font-semibold">
-                                  {subfeature.name}:
-                                </span>{" "}
-                                {subfeature.description}
-                              </li>
-                            ))}
-                          </ul>
-                        )}
+                        {isActive &&
+                          feature.subfeatures &&
+                          feature.subfeatures.length > 0 && (
+                            <ul className="mt-2 space-y-2 bg-gray-50 p-3 rounded-lg">
+                              {feature.subfeatures.map(
+                                (subfeature, subIndex) => (
+                                  <li
+                                    key={subIndex}
+                                    className="text-sm text-gray-700 pl-4 border-l-2 border-gray-300"
+                                  >
+                                    <span className="font-semibold">
+                                      {subfeature.name}:
+                                    </span>{" "}
+                                    {subfeature.description}
+                                  </li>
+                                )
+                              )}
+                            </ul>
+                          )}
                       </div>
                     );
                   })}

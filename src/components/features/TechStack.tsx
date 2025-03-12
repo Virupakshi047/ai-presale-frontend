@@ -12,22 +12,27 @@ interface Technology {
 
 interface ArchitectureResponse {
   message: string;
-  diagram: {
-    nodes: Array<{
-      id: string;
-      attributes: {
-        type?: string;
-        technology?: string;
-        components?: string[];
-      };
-    }>;
-    edges: Array<{
-      source: string;
-      target: string;
-      attributes: {
-        protocol: string;
-      };
-    }>;
+  architectureDiagram: {
+    _id: string;
+    project: string;
+    diagramData: {
+      nodes: Array<{
+        id: string;
+        attributes: {
+          type: string;
+          technology: string;
+        };
+      }>;
+      edges: Array<{
+        source: string;
+        target: string;
+        attributes: {
+          protocol: string;
+        };
+      }>;
+    };
+    createdAt: string;
+    __v: number;
   };
 }
 
@@ -75,10 +80,10 @@ const AITechStack: React.FC = () => {
         setIsLoading(false);
         return;
       }
-  
+
       setIsLoading(true);
       setError("");
-  
+
       while (retries > 0) {
         try {
           const [techStackResponse, architectureResponse] = await Promise.all([
@@ -97,26 +102,29 @@ const AITechStack: React.FC = () => {
               }
             ),
           ]);
-  
+
           if (!techStackResponse.ok || !architectureResponse.ok) {
             throw new Error("Failed to fetch data");
           }
-  
+
           const [techStackData, architectureData] = await Promise.all([
             techStackResponse.json(),
             architectureResponse.json(),
           ]);
-  
+
+          console.log("Tech Stack Data:", techStackData);
+          console.log("Architecture Data:", architectureData);
+
           // Validate response structure
           if (
             techStackData.techStack &&
-            architectureData.diagram &&
-            Array.isArray(techStackData.techStack.frontend) // Basic validation
+            architectureData.architectureDiagram?.diagramData?.nodes && // Updated check
+            Array.isArray(techStackData.techStack.frontend)
           ) {
             if (isMounted) {
               setData({
                 techStack: techStackData.techStack,
-                architecture: architectureData,
+                architecture: architectureData // Store the whole architecture data
               });
               setIsLoading(false);
               return;
@@ -127,28 +135,30 @@ const AITechStack: React.FC = () => {
         } catch (error) {
           console.error("Error fetching data:", error);
           if (isMounted) {
-            setError(error instanceof Error ? error.message : "Error fetching data");
+            setError(
+              error instanceof Error ? error.message : "Error fetching data"
+            );
           }
         }
         retries--;
         await new Promise((resolve) => setTimeout(resolve, 2000)); // Delay before retry
       }
-  
+
       if (isMounted) {
         setIsLoading(false);
         setError("Failed to fetch valid data after multiple attempts.");
       }
     };
-  
+
     fetchData();
     return () => {
       isMounted = false;
     };
-  }, [currentProject?._id]);  
+  }, [currentProject?._id]);
 
   const mermaidDiagram = data.architecture
-    ? convertJsonToMermaid(data.architecture)
-    : "";
+  ? convertJsonToMermaid(data.architecture.architectureDiagram.diagramData)
+  : "";
 
   const categories = [
     { id: 1, key: "frontend", title: "Frontend" },

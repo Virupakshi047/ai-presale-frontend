@@ -271,7 +271,7 @@ export default function AIBusinessAnalyst() {
           className={`${
             selectedWorkflow
               ? "space-y-6 max-h-[calc(100vh-12rem)] overflow-y-auto pr-4 scrollbar-thin scrollbar-thumb-blue-300 scrollbar-track-transparent"
-              : "grid md:grid-cols-2 gap-6 col-span-2"
+              : "grid md:grid-cols-3 gap-6 col-span-3"
           }`}
         >
           {data.personas.map((persona, index) => (
@@ -325,17 +325,19 @@ export default function AIBusinessAnalyst() {
 
         {/* Right side - Workflow Details with fixed height */}
         {selectedWorkflow && (
-          <div className="bg-white rounded-lg shadow-md p-6 relative  top-6">
-            <button
-              onClick={() => setSelectedWorkflow(null)}
-              className="absolute top-3 right-3 p-1.5 rounded-full bg-red-50 hover:bg-red-100 transition-colors duration-200"
-              aria-label="Close workflow details"
-            >
-              <X className="w-4 h-4 text-red-500 cursor-pointer" />
-            </button>
-            <h3 className="text-xl font-semibold text-gray-800 mb-4 pr-8">
-              {selectedWorkflow.name}
-            </h3>
+          <div className="bg-white rounded-lg shadow-md p-6 relative max-h-[calc(100vh-12rem)] overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300">
+            <div className="sticky top-0 bg-white pb-4 z-10">
+              <button
+                onClick={() => setSelectedWorkflow(null)}
+                className="absolute top-3 right-3 p-1.5 rounded-full bg-red-50 hover:bg-red-100 transition-colors duration-200"
+                aria-label="Close workflow details"
+              >
+                <X className="w-4 h-4 text-red-500 cursor-pointer" />
+              </button>
+              <h3 className="text-xl font-semibold text-gray-800 pr-8">
+                {selectedWorkflow.name}
+              </h3>
+            </div>
             {renderWorkflowDetails(selectedWorkflow)}
           </div>
         )}
