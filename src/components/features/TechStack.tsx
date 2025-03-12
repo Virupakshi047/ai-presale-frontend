@@ -156,7 +156,7 @@ const AITechStack: React.FC = () => {
     };
   }, [currentProject?._id]);
 
-  const mermaidDiagram = data.architecture
+  const mermaidDiagram = data.architecture?.architectureDiagram?.diagramData
   ? convertJsonToMermaid(data.architecture.architectureDiagram.diagramData)
   : "";
 

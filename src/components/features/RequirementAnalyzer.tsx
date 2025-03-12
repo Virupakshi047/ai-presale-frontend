@@ -208,6 +208,7 @@ export default function RequirementAnalyzer() {
             ))}
           </ul>
         </div>
+
         {/* Non-Functional Requirements */}
         <div className="bg-white p-6 rounded-lg shadow-md">
           <h3 className="text-xl font-semibold text-gray-700 mb-4 flex items-center">
@@ -234,6 +235,7 @@ export default function RequirementAnalyzer() {
             ))}
           </ul>
         </div>
+        
         {/* Feature Breakdown */}
         <div className="bg-white p-6 rounded-lg shadow-md">
           <h3 className="text-xl font-semibold text-gray-700 mb-6 flex items-center">
