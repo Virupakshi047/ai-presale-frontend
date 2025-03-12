@@ -1,7 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { User, ChevronRight, X, ArrowDown, CheckCircle } from "lucide-react";
+import { useProject } from "@/context/ProjectContext";
 
 interface BaseFeature {
   feature: string;
@@ -41,167 +42,71 @@ interface BusinessAnalysisData {
   personas: Persona[];
 }
 
+interface UserPersonaResponse {
+  message: string;
+  userPersona: {
+    _id: string;
+    personas: Persona[];
+  };
+}
+
 export default function AIBusinessAnalyst() {
+  const { currentProject } = useProject();
   const [selectedWorkflow, setSelectedWorkflow] = useState<Workflow | null>(
     null
   );
+  const [data, setData] = useState<BusinessAnalysisData>({ personas: [] });
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  const data: BusinessAnalysisData = {
-    personas: [
-      {
-        type: "Football Fan",
-        description:
-          "A passionate fan of a specific football club who regularly accesses the club's website or apps for news, match updates, and videos.",
-        workflows: [
-          {
-            name: "Checking Latest News",
-            description:
-              "User journey for accessing and reading club news articles",
-            steps: [
-              {
-                step: 1,
-                action: "Navigates to the Homepage",
-                system_response:
-                  "Displays the latest news, fixtures, and upcoming matches",
-                features_used: ["Homepage"],
-              },
-              {
-                step: 2,
-                action: "Clicks on the News tab",
-                system_response:
-                  "Lists the latest news articles and allows user to filter by category",
-                features_used: ["News Listing"],
-              },
-              {
-                step: 3,
-                action: "Reads an article",
-                system_response:
-                  "Displays individual news articles and allows user to comment, share, and embed polls",
-                features_used: ["News Article"],
-              },
-            ],
-            success_criteria: [
-              "User can access and read news articles about their favorite club",
-              "User can share articles on social media",
-              "User can interact with embedded polls",
-            ],
-          },
-          {
-            name: "Viewing Match Fixtures",
-            description:
-              "A fan checks the upcoming matches for their favorite club.",
-            steps: [
-              {
-                step: 1,
-                action: "Navigates to the Homepage",
-                system_response:
-                  "Displays the latest news, fixtures, and upcoming matches.",
-                features_used: ["Homepage"],
-              },
-              {
-                step: 2,
-                action: "Clicks on the Fixtures tab",
-                system_response:
-                  "Lists upcoming matches and provides details such as date, time, and venue.",
-                features_used: ["Match Fixtures"],
-              },
-            ],
-            success_criteria: [
-              "User can view upcoming matches for their favorite club",
-            ],
-          },
-          {
-            name: "Watching Match Videos",
-            description: "A fan watches videos related to their favorite club.",
-            steps: [
-              {
-                step: 1,
-                action: "Navigates to the Video Hub",
-                system_response:
-                  "Provides access to the club's TV channel and video content.",
-                features_used: ["Video Hub"],
-              },
-              {
-                step: 2,
-                action: "Clicks on a video",
-                system_response:
-                  "Displays individual videos and allows user to watch and share.",
-                features_used: ["Video Article"],
-              },
-            ],
-            success_criteria: [
-              "User can watch videos related to their favorite club",
-            ],
-          },
-        ],
-      },
-      {
-        type: "Club Staff Member",
-        description:
-          "A member of the club's staff who uses the website or apps for work-related purposes, such as checking league tables, player profiles, and staff listings.",
-        workflows: [
-          {
-            name: "Checking League Tables",
-            description:
-              "A staff member checks the current league standings for the club's team.",
-            steps: [
-              {
-                step: 1,
-                action: "Navigates to the League Tables tab",
-                system_response:
-                  "Displays the current league standings for the club's team.",
-                features_used: ["League Tables"],
-              },
-            ],
-            success_criteria: [
-              "Staff member can view the current league standings for the club's team",
-            ],
-          },
-          {
-            name: "Viewing Player Profiles",
-            description:
-              "A staff member checks detailed information about a specific player.",
-            steps: [
-              {
-                step: 1,
-                action: "Navigates to the Player Listing",
-                system_response:
-                  "Lists all the players on the club's team and provides details such as position, age, and nationality.",
-                features_used: ["Player Listing"],
-              },
-              {
-                step: 2,
-                action: "Clicks on a player's profile",
-                system_response:
-                  "Displays detailed information about a specific player, including career statistics, awards, and social media links.",
-                features_used: ["Player Profile"],
-              },
-            ],
-            success_criteria: [
-              "Staff member can view detailed information about a specific player",
-            ],
-          },
-          {
-            name: "Checking Staff Listings",
-            description:
-              "A staff member checks the contact information for other staff members.",
-            steps: [
-              {
-                step: 1,
-                action: "Navigates to the Staff Listing",
-                system_response:
-                  "Lists all the staff members on the club and provides details such as position and contact information.",
-                features_used: ["Staff Listing"],
-              },
-            ],
-            success_criteria: [
-              "Staff member can view contact information for other staff members",
-            ],
-          },
-        ],
-      },
-    ],
-  };
+  useEffect(() => {
+    const fetchUserPersona = async () => {
+      if (!currentProject?._id) {
+        setIsLoading(false);
+        return;
+      }
+
+      setIsLoading(true);
+      try {
+        const response = await fetch(
+          `http://localhost:8080/user-persona/${currentProject._id}`
+        );
+
+        if (!response.ok) {
+          throw new Error("Failed to fetch user persona");
+        }
+
+        const data: UserPersonaResponse = await response.json();
+        setData({ personas: data.userPersona.personas });
+        setError(null);
+      } catch (err) {
+        setError("Failed to fetch user persona data");
+        console.error("Error fetching user persona:", err);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchUserPersona();
+  }, [currentProject?._id]);
+
+  // Loading state
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500" />
+      </div>
+    );
+  }
+
+  // Error state
+  if (error) {
+    return (
+      <div className="p-4 bg-red-50 text-red-600 rounded-lg">
+        <p>{error}</p>
+      </div>
+    );
+  }
 
   const featureData = {
     feature_categories: {
