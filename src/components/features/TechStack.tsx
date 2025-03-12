@@ -67,75 +67,84 @@ const AITechStack: React.FC = () => {
   });
 
   useEffect(() => {
-    console.log("Fetching data..."); // Debug log
-    let isMounted = true; // For cleanup
-
+    console.log("Fetching data...");
+    let isMounted = true;
+    let retries = 3; // Retry mechanism
     const fetchData = async () => {
       if (!currentProject?._id) {
         setIsLoading(false);
         return;
       }
-
+  
       setIsLoading(true);
-      try {
-        const [techStackResponse, architectureResponse] = await Promise.all([
-          fetch(
-            `http://localhost:8080/tech-architecture/generate-tech-stack/${currentProject._id}`,
-            {
-              credentials: "include",
-              headers: {
-                Accept: "application/json",
-              },
+      setError("");
+  
+      while (retries > 0) {
+        try {
+          const [techStackResponse, architectureResponse] = await Promise.all([
+            fetch(
+              `http://localhost:8080/tech-architecture/generate-tech-stack/${currentProject._id}`,
+              {
+                credentials: "include",
+                headers: { Accept: "application/json" },
+              }
+            ),
+            fetch(
+              `http://localhost:8080/tech-architecture/generate-architecture-diagram/${currentProject._id}`,
+              {
+                credentials: "include",
+                headers: { Accept: "application/json" },
+              }
+            ),
+          ]);
+  
+          if (!techStackResponse.ok || !architectureResponse.ok) {
+            throw new Error("Failed to fetch data");
+          }
+  
+          const [techStackData, architectureData] = await Promise.all([
+            techStackResponse.json(),
+            architectureResponse.json(),
+          ]);
+  
+          // Validate response structure
+          if (
+            techStackData.techStack &&
+            architectureData.diagram &&
+            Array.isArray(techStackData.techStack.frontend) // Basic validation
+          ) {
+            if (isMounted) {
+              setData({
+                techStack: techStackData.techStack,
+                architecture: architectureData,
+              });
+              setIsLoading(false);
+              return;
             }
-          ),
-          fetch(
-            `http://localhost:8080/tech-architecture/generate-architecture-diagram/${currentProject._id}`,
-            {
-              credentials: "include",
-              headers: {
-                Accept: "application/json",
-              },
-            }
-          ),
-        ]);
-
-        if (!techStackResponse.ok || !architectureResponse.ok) {
-          throw new Error("Failed to fetch data");
+          } else {
+            console.warn("Invalid data received, retrying...");
+          }
+        } catch (error) {
+          console.error("Error fetching data:", error);
+          if (isMounted) {
+            setError(error instanceof Error ? error.message : "Error fetching data");
+          }
         }
-
-        const [techStackData, architectureData] = await Promise.all([
-          techStackResponse.json(),
-          architectureResponse.json(),
-        ]);
-
-        if (isMounted) {
-          // Single state update instead of multiple
-          setData({
-            techStack: techStackData.techStack,
-            architecture: architectureData,
-          });
-        }
-      } catch (error) {
-        console.error("Error fetching data:", error);
-        if (isMounted) {
-          setError(
-            error instanceof Error ? error.message : "Error fetching data"
-          );
-          setData({ techStack: null, architecture: null });
-        }
-      } finally {
-        if (isMounted) {
-          setIsLoading(false);
-        }
+        retries--;
+        await new Promise((resolve) => setTimeout(resolve, 2000)); // Delay before retry
+      }
+  
+      if (isMounted) {
+        setIsLoading(false);
+        setError("Failed to fetch valid data after multiple attempts.");
       }
     };
-
+  
     fetchData();
-
     return () => {
-      isMounted = false; // Cleanup
+      isMounted = false;
     };
-  }, [currentProject?._id]);
+  }, [currentProject?._id]);  
 
   const mermaidDiagram = data.architecture
     ? convertJsonToMermaid(data.architecture)

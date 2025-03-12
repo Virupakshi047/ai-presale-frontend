@@ -4,48 +4,59 @@ import { useState } from "react";
 // import { useState as useHoverState } from "react";
 import { useProject } from "@/context/ProjectContext";
 
-interface ActiveFeature {
-  index: number | null;
+interface SubFeature {
+  name: string;
   description: string;
 }
 
-interface FeatureBreakdown {
-  component: string;
+interface Feature {
+  name: string;
   description: string;
+  subfeatures?: SubFeature[];
+}
+
+interface Module {
+  module: string;
+  features: Feature[];
 }
 
 interface AnalysisResult {
   message: string;
   functionalRequirement: string[];
   nonFunctionalRequirement: string[];
-  featureBreakdown: FeatureBreakdown[];
+  featureBreakdown: Module[];
 }
 
 interface AnalysisResponse {
   message: string;
-  data: {
-    requirementText: string;
-    requirementFileUrl: string;
-    functionalRequirement: any[];
-    nonFunctionalRequirement: any[];
-    _id: string;
-  };
+  data: AnalysisResult;
 }
 
 export default function RequirementAnalyzer() {
   const { currentProject } = useProject();
+
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [requirementText, setRequirementText] = useState<string>("");
   const [error, setError] = useState<string>("");
   const [isLoading, setIsLoading] = useState(false);
   const [success, setSuccess] = useState<string>("");
+
   const [analysisResults, setAnalysisResults] = useState<AnalysisResult | null>(
     null
   );
-  const [activeFeature, setActiveFeature] = useState<ActiveFeature>({
-    index: null,
+
+  const [activeFeature, setActiveFeature] = useState<{
+    moduleIndex: number | null;
+    featureIndex: number | null;
+    subfeatureIndex?: number | null;
+    description: string;
+  }>({
+    moduleIndex: null,
+    featureIndex: null,
+    subfeatureIndex: null,
     description: "",
   });
+
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setError("");
@@ -230,40 +241,52 @@ export default function RequirementAnalyzer() {
 
         {/* Feature Breakdown */}
         <div className="bg-white p-6 rounded-lg shadow-md">
-          <h3 className="text-xl font-semibold text-gray-700 mb-6 flex items-center">
-            <svg
-              className="w-6 h-6 mr-2 text-green-500"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth="2"
-                d="M4 6h16M4 10h16M4 14h16M4 18h16"
-              />
-            </svg>
-            Feature Breakdown
-          </h3>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {analysisResults.featureBreakdown.map((feature, index) => (
-              <div
-                key={index}
-                className="relative group"
-                onClick={() => {
-                  if (window.innerWidth < 1024) {
-                    // mobile devices
-                    setActiveFeature((prev) => ({
-                      index: prev.index === index ? null : index,
-                      description: feature.description,
-                    }));
+  <h3 className="text-xl font-semibold text-gray-700 mb-6 flex items-center">
+    <svg
+      className="w-6 h-6 mr-2 text-green-500"
+      fill="none"
+      stroke="currentColor"
+      viewBox="0 0 24 24"
+    >
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth="2"
+        d="M4 6h16M4 10h16M4 14h16M4 18h16"
+      />
+    </svg>
+    Feature Breakdown
+  </h3>
+
+  <div className="space-y-8">
+    {analysisResults?.featureBreakdown?.map((module, moduleIndex) => (
+      <div key={moduleIndex}>
+        <h4 className="text-lg font-bold text-gray-800 mb-4">
+          {module.module}
+        </h4>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          {module.features.map((feature, featureIndex) => {
+            const isActive =
+              activeFeature.moduleIndex === moduleIndex &&
+              activeFeature.featureIndex === featureIndex;
+
+            return (
+              <div key={featureIndex} className="relative">
+                <div
+                  className="p-4 border border-gray-200 rounded-lg hover:border-blue-500 transition-all duration-200 cursor-pointer bg-white"
+                  onClick={() =>
+                    setActiveFeature((prev) =>
+                      isActive
+                        ? { moduleIndex: null, featureIndex: null, description: "" }
+                        : { moduleIndex, featureIndex, description: feature.description }
+                    )
                   }
-                }}
-              >
-                <div className="p-4 border border-gray-200 rounded-lg hover:border-blue-500 transition-all duration-200 cursor-pointer bg-white">
-                  <h4 className="font-medium text-gray-800 text-center">
-                    {feature.component}
+                >
+                  <h4 className="font-medium text-gray-800 text-center flex justify-between items-center">
+                    {feature.name}
+                    <span className="text-gray-500 text-sm">
+                      {isActive ? "▲" : "▼"}
+                    </span>
                   </h4>
 
                   {/* Desktop Hover Tooltip */}
@@ -273,16 +296,33 @@ export default function RequirementAnalyzer() {
                   </div>
 
                   {/* Mobile Click Description */}
-                  {activeFeature.index === index && (
+                  {isActive && (
                     <div className="lg:hidden mt-2 p-2 text-sm text-gray-600 border-t border-gray-200">
                       {feature.description}
                     </div>
                   )}
                 </div>
+
+                {/* Collapsible Subfeatures */}
+                {isActive && feature.subfeatures?.length > 0 && (
+                  <ul className="mt-2 space-y-2 bg-gray-50 p-3 rounded-lg">
+                    {feature.subfeatures.map((subfeature, subIndex) => (
+                      <li key={subIndex} className="text-sm text-gray-700 pl-4 border-l-2 border-gray-300">
+                        <span className="font-semibold">{subfeature.name}:</span> {subfeature.description}
+                      </li>
+                    ))}
+                  </ul>
+                )}
               </div>
-            ))}
-          </div>
+            );
+          })}
         </div>
+      </div>
+    ))}
+  </div>
+</div>;
+
+
       </div>
     );
   };
@@ -301,9 +341,8 @@ export default function RequirementAnalyzer() {
       <h2 className="text-2xl font-bold mb-4">Input Requirements</h2>
 
       <div
-        className={`border-2 border-dashed p-6 text-center rounded-2xl ${
-          error ? "border-red-500 bg-red-50" : ""
-        }`}
+        className={`border-2 border-dashed p-6 text-center rounded-2xl ${error ? "border-red-500 bg-red-50" : ""
+          }`}
         style={{
           borderColor: error ? "#EF4444" : "#FF5B27",
           backgroundColor: error
@@ -353,11 +392,10 @@ export default function RequirementAnalyzer() {
       <button
         onClick={handleSubmit}
         disabled={!selectedFile || isLoading}
-        className={`mt-4 px-4 py-2 rounded text-white transition-colors duration-200 flex items-center justify-center ${
-          selectedFile && !isLoading
-            ? "bg-blue-600 hover:bg-blue-700 cursor-pointer"
-            : "bg-gray-400 cursor-not-allowed"
-        }`}
+        className={`mt-4 px-4 py-2 rounded text-white transition-colors duration-200 flex items-center justify-center ${selectedFile && !isLoading
+          ? "bg-blue-600 hover:bg-blue-700 cursor-pointer"
+          : "bg-gray-400 cursor-not-allowed"
+          }`}
       >
         {isLoading ? (
           <>

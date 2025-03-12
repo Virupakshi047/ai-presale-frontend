@@ -51,7 +51,7 @@ export function convertJsonToMermaid(diagramJson: DiagramJson): string {
         label += `\n (${node.attributes.technology})`;
       }
       if (node.attributes.components && node.attributes.components.length) {
-        label += `\nComponents: ${node.attributes.components.join(', ')}`;
+        // label += `\nComponents: ${node.attributes.components.join(', ')}`;
       }
     }
 
