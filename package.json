@@ -9,6 +9,7 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@tanstack/react-table": "^8.21.2",
     "framer-motion": "^12.5.0",
     "frontend": "file:",
     "lucide-react": "^0.477.0",
@@ -18,7 +19,9 @@
     "react": "^19.0.0",
     "react-archer": "^4.4.0",
     "react-dom": "^19.0.0",
-    "tailwind-scrollbar": "^4.0.1"
+    "react-window": "^1.8.11",
+    "tailwind-scrollbar": "^4.0.1",
+    "xlsx": "^0.18.5"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",
@@ -26,6 +29,7 @@
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "@types/react-window": "^1.8.8",
     "eslint": "^9",
     "eslint-config-next": "15.2.1",
     "tailwindcss": "^4",

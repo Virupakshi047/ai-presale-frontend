@@ -1,1 +1,5 @@
 @import "tailwindcss";
+/* Add to your CSS */
+.overflow-x-auto {
+    -webkit-overflow-scrolling: touch;
+  }
