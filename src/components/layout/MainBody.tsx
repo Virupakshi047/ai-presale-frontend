@@ -6,6 +6,7 @@ import RequirementAnalyzer from "../features/RequirementAnalyzer";
 import AITechStack from "../features/TechStack";
 import { useProject } from "@/context/ProjectContext";
 import AIBusinessAnalyst from "../features/AIBusinessAnalyst";
+import EffortAndCost from "@/components/features/EffortAndCost";
 
 interface FeatureBreakdown {
   component: string;
@@ -50,6 +51,7 @@ export default function MainBody() {
     { id: "requirementAnalysis", label: "Requirement Analysis" },
     { id: "feature1", label: "AI Tech-stack" },
     { id: "feature2", label: "AI Business Analyst" },
+    { id: "feature3", label: "Effort and Cost estimation" },
   ];
   const handleAnalysisResults = (results: AnalysisResult) => {
     setAnalysisResults(results);
@@ -99,6 +101,7 @@ export default function MainBody() {
         {activeTab === "requirementAnalysis" && <RequirementAnalyzer />}
         {activeTab === "feature1" && <AITechStack />}
         {activeTab === "feature2" && <AIBusinessAnalyst />}
+        {activeTab === "feature3" && <EffortAndCost />}
       </div>
     </div>
   );
