@@ -84,10 +84,10 @@ export default function Sidebar() {
 
       {/* Sidebar - Adjusted z-index and added proper height constraints */}
       <div
-        className={`fixed  lg:static w-64 bg-gray-100 min-h-screen overflow-y-auto 
-        p-4 transform transition-transform duration-300 ease-in-out z-35
+        className={`fixed lg:sticky lg:top-0 w-64 bg-gray-100 h-screen overflow-y-auto 
+        p-4 transform transition-transform duration-300 ease-in-out z-50
         ${isOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"}
-        shadow-lg lg:shadow-none`}
+        shadow-lg lg:shadow-none flex-shrink-0`}
       >
         <div className="flex items-center justify-between mb-4 sticky top-0 bg-gray-100 py-2">
           <h2 className="text-xl font-bold">Projects</h2>
