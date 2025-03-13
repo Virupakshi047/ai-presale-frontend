@@ -47,7 +47,15 @@ interface UserPersonaResponse {
   userPersona: {
     _id: string;
     personas: Persona[];
+    categorized_features: {
+      feature_categories: FeatureCategories;
+    };
   };
+}
+
+interface ComponentState {
+  personas: Persona[];
+  featureCategories: FeatureCategories | null;
 }
 
 export default function AIBusinessAnalyst() {
@@ -55,7 +63,10 @@ export default function AIBusinessAnalyst() {
   const [selectedWorkflow, setSelectedWorkflow] = useState<Workflow | null>(
     null
   );
-  const [data, setData] = useState<BusinessAnalysisData>({ personas: [] });
+  const [data, setData] = useState<ComponentState>({
+    personas: [],
+    featureCategories: null,
+  });
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -72,12 +83,18 @@ export default function AIBusinessAnalyst() {
           `http://localhost:8080/user-persona/${currentProject._id}`
         );
 
+        
+
         if (!response.ok) {
           throw new Error("Failed to fetch user persona");
         }
 
-        const data: UserPersonaResponse = await response.json();
-        setData({ personas: data.userPersona.personas });
+        const responseData: UserPersonaResponse = await response.json();
+        setData({
+          personas: responseData.userPersona.personas,
+          featureCategories:
+            responseData.userPersona.categorized_features.feature_categories,
+        });
         setError(null);
       } catch (err) {
         setError("Failed to fetch user persona data");
@@ -108,82 +125,6 @@ export default function AIBusinessAnalyst() {
     );
   }
 
-  const featureData = {
-    feature_categories: {
-      must_have: [
-        {
-          feature: "AI-Powered Proficiency Assessment",
-          description:
-            "AI evaluates the user's proficiency level via a diagnostic test at onboarding and ongoing performance analysis from lesson interactions using speech, text, and grammar evaluation.",
-          rationale:
-            "Essential for MVP as it provides a baseline for user proficiency and guides the adaptive learning process.",
-          business_impact: "High",
-        },
-        {
-          feature: "Adaptive Lesson Planning",
-          description:
-            "Provides personalized lesson plans targeting weak areas. AI generates tailored daily lessons based on user's availability and learning goals. Dynamically adjusts difficulty level based on real-time performance.",
-          rationale:
-            "Essential for MVP as it ensures that the learning content is relevant and challenging for each user.",
-          business_impact: "High",
-        },
-        {
-          feature: "Conversational AI for Real-Life Dialogues",
-          description:
-            "AI simulates real-world conversations for practical learning. The AI can understand and correct grammar mistakes, adapt responses based on the user's proficiency, engage in natural conversations to improve fluency, analyze pronunciation and give real-time feedback, detect phonetic mistakes and provide corrections, and grade pronunciation accuracy and suggest improvements.",
-          rationale:
-            "Essential for MVP as it provides a realistic and interactive learning environment.",
-          business_impact: "High",
-        },
-        {
-          feature: "Spaced Repetition & Revision Scheduling",
-          description:
-            "AI suggests revision schedules based on spaced repetition techniques. Users receive reminders for timely lesson reviews. Generates AI-powered summaries of past lessons for quick revision.",
-          rationale:
-            "Essential for MVP as it improves user retention and learning efficiency.",
-          business_impact: "High",
-        },
-      ],
-      nice_to_have: [
-        {
-          feature:
-            "Scalability and efficiency of AI-powered adaptive learning engine",
-          description:
-            "Ensures the system can handle a large number of users and lessons efficiently.",
-        },
-        {
-          feature: "Security compliance and data protection measures",
-          description:
-            "Ensures user data is protected and handled in accordance with relevant regulations.",
-        },
-        {
-          feature:
-            "Accuracy of AI-generated language explanations vs. human instructors",
-          description:
-            "Ensures the AI's language explanations are as accurate and helpful as those provided by human instructors.",
-        },
-      ],
-      future_enhancements: [
-        {
-          feature:
-            "AI adjusts lesson difficulty dynamically based on real-time user performance",
-          description:
-            "Improves the adaptive learning engine's responsiveness to user performance changes.",
-        },
-        {
-          feature: "Speech recognition achieves at least 85% phonetic accuracy",
-          description:
-            "Improves the system's ability to accurately transcribe user speech.",
-        },
-        {
-          feature:
-            "Conversational AI engages naturally and provides contextual corrections",
-          description:
-            "Improves the AI's ability to engage users in natural and contextually relevant conversations.",
-        },
-      ],
-    },
-  };
   const renderWorkflowDetails = (workflow: Workflow) => {
     return (
       <div className="space-y-6">
@@ -347,71 +288,73 @@ export default function AIBusinessAnalyst() {
           Feature Categories
         </h2>
         <div className="grid md:grid-cols-3 gap-6">
-          {[
-            {
-              title: "Must Have Features",
-              features: featureData.feature_categories.must_have,
-              bgColor: "bg-blue-500",
-              lightBg: "bg-blue-50",
-              textColor: "text-blue-700",
-              showExtras: true,
-            },
-            {
-              title: "Nice to Have Features",
-              features: featureData.feature_categories.nice_to_have,
-              bgColor: "bg-purple-500",
-              lightBg: "bg-purple-50",
-              textColor: "text-purple-700",
-              showExtras: false,
-            },
-            {
-              title: "Future Enhancements",
-              features: featureData.feature_categories.future_enhancements,
-              bgColor: "bg-green-500",
-              lightBg: "bg-green-50",
-              textColor: "text-green-700",
-              showExtras: false,
-            },
-          ].map((category, idx) => (
-            <div
-              key={category.title}
-              className={`${category.lightBg} rounded-lg p-6 max-h-[calc(100vh-16rem)] overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 hover:scrollbar-thumb-gray-400 transition-all duration-200`}
-            >
+          {data.featureCategories &&
+            [
+              {
+                title: "Must Have Features",
+                features: data.featureCategories.must_have,
+                bgColor: "bg-blue-500",
+                lightBg: "bg-blue-50",
+                textColor: "text-blue-700",
+                showExtras: true,
+              },
+              {
+                title: "Nice to Have Features",
+                features: data.featureCategories.nice_to_have,
+                bgColor: "bg-purple-500",
+                lightBg: "bg-purple-50",
+                textColor: "text-purple-700",
+                showExtras: false,
+              },
+              {
+                title: "Future Enhancements",
+                features: data.featureCategories.future_enhancements,
+                bgColor: "bg-green-500",
+                lightBg: "bg-green-50",
+                textColor: "text-green-700",
+                showExtras: false,
+              },
+            ].map((category, idx) => (
               <div
-                className={`${category.bgColor} text-white rounded-lg p-3 mb-4 sticky top-0 shadow-sm z-10`}
+                key={category.title}
+                className={`${category.lightBg} rounded-lg p-6 max-h-[calc(100vh-16rem)] overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 hover:scrollbar-thumb-gray-400 transition-all duration-200`}
               >
-                <h3 className="font-semibold">{category.title}</h3>
-              </div>
-              <div className="space-y-4">
-                {category.features.map((feature, index) => (
-                  <div
-                    key={index}
-                    className="bg-white rounded-lg p-4 shadow-sm hover:shadow-lg transition-all duration-200"
-                  >
-                    <h4 className={`${category.textColor} font-medium mb-2`}>
-                      {feature.feature}
-                    </h4>
-                    <p className="text-gray-600 text-sm">
-                      {feature.description}
-                    </p>
-                    {category.showExtras && "rationale" in feature && (
-                      <p className="text-gray-500 text-sm mt-2 pt-2 border-t">
-                        <span className="font-medium">Rationale:</span>{" "}
-                        {(feature as MustHaveFeature).rationale}
+                <div
+                  className={`${category.bgColor} text-white rounded-lg p-3 mb-4 sticky top-0 shadow-sm z-10`}
+                >
+                  <h3 className="font-semibold">{category.title}</h3>
+                </div>
+                <div className="space-y-4">
+                  {category.features.map((feature, index) => (
+                    <div
+                      key={index}
+                      className="bg-white rounded-lg p-4 shadow-sm hover:shadow-lg transition-all duration-200"
+                    >
+                      <h4 className={`${category.textColor} font-medium mb-2`}>
+                        {feature.feature}
+                      </h4>
+                      <p className="text-gray-600 text-sm">
+                        {feature.description}
                       </p>
-                    )}
-                    {category.showExtras && "business_impact" in feature && (
-                      <div className="mt-2">
-                        <span className="px-2 py-1 text-xs rounded bg-orange-100 text-orange-700">
-                          Impact: {(feature as MustHaveFeature).business_impact}
-                        </span>
-                      </div>
-                    )}
-                  </div>
-                ))}
+                      {category.showExtras && "rationale" in feature && (
+                        <p className="text-gray-500 text-sm mt-2 pt-2 border-t">
+                          <span className="font-medium">Rationale:</span>{" "}
+                          {(feature as MustHaveFeature).rationale}
+                        </p>
+                      )}
+                      {category.showExtras && "business_impact" in feature && (
+                        <div className="mt-2">
+                          <span className="px-2 py-1 text-xs rounded bg-orange-100 text-orange-700">
+                            Impact:{" "}
+                            {(feature as MustHaveFeature).business_impact}
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
               </div>
-            </div>
-          ))}
+            ))}
         </div>
       </div>
     </div>
