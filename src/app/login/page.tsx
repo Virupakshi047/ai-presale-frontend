@@ -11,7 +11,7 @@ interface LoginForm {
   role: "Project Head" | "Project Associate" | "JrDev" | "";
 }
 
-export default function SignUpPage() {
+export default function LoginPage() {
   const router = useRouter();
   const [showPassword, setShowPassword] = useState(false);
   const [formData, setFormData] = useState<LoginForm>({
@@ -25,30 +25,33 @@ export default function SignUpPage() {
     e.preventDefault();
     setError("");
 
-    // Basic validation
     if (!formData.email || !formData.password || !formData.role) {
       setError("All fields are required");
       return;
     }
 
-    // For now, just log the attempt and redirect
-    console.log("Login attempt:", formData);
-    router.push("/dashboard");
+    try {
+      // TODO: Replace with actual API endpoint
+      console.log("Login attempt:", formData);
+      router.push("/dashboard");
+    } catch (err) {
+      setError("Invalid credentials");
+    }
   };
 
   return (
     <div className="min-h-screen bg-gray-100 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
       <div className="sm:mx-auto sm:w-full sm:max-w-md">
         <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
-          Create your account
+          Login to your account
         </h2>
         <p className="mt-2 text-center text-sm text-gray-600">
           Or{" "}
           <Link
-            href="/login"
+            href="/"
             className="font-medium text-blue-600 hover:text-blue-500"
           >
-            login to your existing account
+            sign up for a new account
           </Link>
         </p>
       </div>
@@ -152,7 +155,7 @@ export default function SignUpPage() {
                 className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
               >
                 <LogIn className="h-5 w-5 mr-2" />
-                Sign in
+                Login
               </button>
             </div>
           </form>
