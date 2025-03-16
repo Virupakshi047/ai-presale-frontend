@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useProject } from "@/context/ProjectContext";
-import { PencilIcon } from "lucide-react";
+import { PencilIcon, XIcon } from "lucide-react";
 
 interface SubFeature {
   name: string;
@@ -17,7 +17,7 @@ interface Feature {
 
 interface Module {
   module: string;
-  features: Feature[];
+  features?: Feature[]; // Make features optional
 }
 
 interface AnalysisResult {
@@ -191,7 +191,7 @@ export default function RequirementAnalyzer() {
       setSelectedFile(null);
       setRequirementText("");
 
-      // Fetch and show results immediately
+      // Automatically fetch and show results
       const analysisResponse = await fetch(
         `http://localhost:8080/requirment-analysis/${projectId}`,
         {
@@ -202,18 +202,20 @@ export default function RequirementAnalyzer() {
 
       if (analysisResponse.ok) {
         const analysisResult: AnalysisResult = await analysisResponse.json();
-        if (currentProject._id === projectId) {
-          // Check if project is still the same
-          setAnalysisResults(analysisResult);
-          if (
-            analysisResult &&
-            analysisResult.functionalRequirement &&
-            analysisResult.functionalRequirement.length > 0
-          ) {
+
+        // Validate the response structure
+        if (
+          analysisResult &&
+          Array.isArray(analysisResult.functionalRequirement) &&
+          Array.isArray(analysisResult.nonFunctionalRequirement) &&
+          Array.isArray(analysisResult.featureBreakdown)
+        ) {
+          if (currentProject._id === projectId) {
+            setAnalysisResults(analysisResult);
             setShowInputSection(false);
-          } else {
-            setShowInputSection(true);
           }
+        } else {
+          throw new Error("Invalid analysis result structure");
         }
       }
 
@@ -232,69 +234,40 @@ export default function RequirementAnalyzer() {
     }
   };
 
-  const handleGetResults = async () => {
-    if (!currentProject) {
-      setError("Please select a project first");
-      return;
-    }
-
-    const projectId = currentProject._id; // Capture the project ID at the start
-    setIsLoading(true);
-    setError("");
-
-    try {
-      const response = await fetch(
-        `http://localhost:8080/requirment-analysis/${projectId}`,
-        {
-          method: "GET",
-          credentials: "include",
-          headers: {
-            Accept: "application/json",
-          },
-        }
-      );
-
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
-      const result: AnalysisResult = await response.json();
-      if (currentProject._id === projectId) {
-        // Check if project is still the same
-        setAnalysisResults(result);
-        if (
-          result &&
-          result.functionalRequirement &&
-          result.functionalRequirement.length > 0
-        ) {
-          setShowInputSection(false);
-        } else {
-          setShowInputSection(true);
-        }
-      }
-    } catch (err) {
-      console.error("Error fetching results:", err);
-      setError(
-        err instanceof Error ? err.message : "Error fetching analysis results"
-      );
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const renderModifyButton = () => (
-    <button
-      onClick={() => setShowInputSection(true)}
-      className="fixed bottom-6 right-6 p-3 bg-blue-600 text-white rounded-full shadow-lg hover:bg-blue-700 transition-colors duration-200"
-    >
-      <PencilIcon className="w-5 h-5" />
-    </button>
+  const renderModifyButtons = () => (
+    <div className="fixed bottom-6 right-6 flex gap-2">
+      {showInputSection ? (
+        <button
+          onClick={() => {
+            setShowInputSection(false);
+            // Reset input states
+            setSelectedFile(null);
+            setRequirementText("");
+            setError("");
+            setSuccess("");
+          }}
+          className="p-3 bg-gray-600 text-white rounded-full shadow-lg hover:bg-gray-700 transition-colors duration-200"
+          title="Cancel modification"
+        >
+          <XIcon className="w-5 h-5" />
+        </button>
+      ) : (
+        <button
+          onClick={() => setShowInputSection(true)}
+          className="p-3 bg-blue-600 text-white rounded-full shadow-lg hover:bg-blue-700 transition-colors duration-200"
+          title="Modify requirements"
+        >
+          <PencilIcon className="w-5 h-5" />
+        </button>
+      )}
+    </div>
   );
 
   const renderAnalysisResults = () => {
     if (!analysisResults) return null;
+
     return (
-      <div className="mt-8 space-y-6">
+      <div className="space-y-6">
         <h2 className="text-2xl font-bold text-gray-800">Analysis Results</h2>
         {/* Functional Requirements */}
         <div className="bg-white p-6 rounded-lg shadow-md">
@@ -373,7 +346,8 @@ export default function RequirementAnalyzer() {
                   {module.module}
                 </h4>
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 gap-6">
-                  {module.features.map((feature, featureIndex) => {
+                  {/* Add null check for features array */}
+                  {module.features?.map((feature, featureIndex) => {
                     const isActive =
                       activeFeature.moduleIndex === moduleIndex &&
                       activeFeature.featureIndex === featureIndex;
@@ -431,7 +405,11 @@ export default function RequirementAnalyzer() {
                           )}
                       </div>
                     );
-                  })}
+                  }) || (
+                    <div className="text-gray-500 italic">
+                      No features available for this module
+                    </div>
+                  )}
                 </div>
               </div>
             ))}
@@ -541,85 +519,12 @@ export default function RequirementAnalyzer() {
               "Process Requirements"
             )}
           </button>
-
-          {error && (
-            <div className="mt-4 p-4 bg-red-50 border border-red-200 rounded-lg">
-              <div className="flex items-center">
-                <svg
-                  className="h-5 w-5 text-red-600 mr-2"
-                  fill="currentColor"
-                  viewBox="0 0 20 20"
-                >
-                  <path
-                    fillRule="evenodd"
-                    d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
-                    clipRule="evenodd"
-                  />
-                </svg>
-                <p className="text-red-600">{error}</p>
-              </div>
-            </div>
-          )}
-
-          {success && (
-            <div className="mt-4 p-4 bg-green-50 border border-green-200 rounded-lg">
-              <div className="flex items-center">
-                <svg
-                  className="h-5 w-5 text-green-600 mr-2"
-                  fill="currentColor"
-                  viewBox="0 0 20 20"
-                >
-                  <path
-                    fillRule="evenodd"
-                    d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
-                    clipRule="evenodd"
-                  />
-                </svg>
-                <p className="text-green-600">{success}</p>
-              </div>
-            </div>
-          )}
-
-          <button
-            onClick={handleGetResults}
-            disabled={isLoading}
-            className="mt-4 px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 transition-colors duration-200 flex items-center justify-center cursor-pointer"
-          >
-            {isLoading ? (
-              <>
-                <svg
-                  className="animate-spin -ml-1 mr-3 h-5 w-5 text-white"
-                  xmlns="http://www.w3.org/2000/svg"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                >
-                  <circle
-                    className="opacity-25"
-                    cx="12"
-                    cy="12"
-                    r="10"
-                    stroke="currentColor"
-                    strokeWidth="4"
-                  ></circle>
-                  <path
-                    className="opacity-75"
-                    fill="currentColor"
-                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                  ></path>
-                </svg>
-                Fetching Results...
-              </>
-            ) : (
-              "Get Analysis Results"
-            )}
-          </button>
         </>
       ) : (
-        <>
-          {renderAnalysisResults()}
-          {renderModifyButton()}
-        </>
+        <>{renderAnalysisResults()}</>
       )}
+      {currentProject && renderModifyButtons()}{" "}
+      {/* Always show modify/cancel buttons when project exists */}
     </div>
   );
 }
