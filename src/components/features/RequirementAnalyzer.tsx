@@ -1,8 +1,8 @@
 "use client";
 
-import { useState } from "react";
-// import { useState as useHoverState } from "react";
+import { useState, useEffect } from "react";
 import { useProject } from "@/context/ProjectContext";
+import { PencilIcon } from "lucide-react";
 
 interface SubFeature {
   name: string;
@@ -40,11 +40,10 @@ export default function RequirementAnalyzer() {
   const [error, setError] = useState<string>("");
   const [isLoading, setIsLoading] = useState(false);
   const [success, setSuccess] = useState<string>("");
-
+  const [showInputSection, setShowInputSection] = useState(true);
   const [analysisResults, setAnalysisResults] = useState<AnalysisResult | null>(
     null
   );
-
   const [activeFeature, setActiveFeature] = useState<{
     moduleIndex: number | null;
     featureIndex: number | null;
@@ -56,6 +55,76 @@ export default function RequirementAnalyzer() {
     subfeatureIndex: null,
     description: "",
   });
+  const [isAnalysisLoading, setIsAnalysisLoading] = useState(false);
+
+  useEffect(() => {
+    const controller = new AbortController(); // For cleanup
+
+    async function loadAnalysis() {
+      if (!currentProject?._id) {
+        setShowInputSection(true);
+        setAnalysisResults(null);
+        return;
+      }
+
+      setIsAnalysisLoading(true);
+      console.log("Loading analysis for project:", currentProject._id);
+
+      try {
+        const response = await fetch(
+          `http://localhost:8080/requirment-analysis/${currentProject._id}`,
+          {
+            credentials: "include",
+            headers: { Accept: "application/json" },
+            signal: controller.signal,
+          }
+        );
+
+        const result = await response.json();
+
+        // Debug log
+        console.log("Analysis result:", {
+          projectId: currentProject._id,
+          hasData: Boolean(result?.functionalRequirement?.length),
+          result,
+        });
+
+        if (response.ok && result?.functionalRequirement?.length > 0) {
+          setAnalysisResults(result);
+          setShowInputSection(false);
+        } else {
+          setAnalysisResults(null);
+          setShowInputSection(true);
+        }
+      } catch (err) {
+        if (!controller.signal.aborted) {
+          console.error("Error loading analysis:", err);
+          setAnalysisResults(null);
+          setShowInputSection(true);
+        }
+      } finally {
+        setIsAnalysisLoading(false);
+      }
+    }
+
+    // Reset states first
+    setSelectedFile(null);
+    setRequirementText("");
+    setError("");
+    setSuccess("");
+    setActiveFeature({
+      moduleIndex: null,
+      featureIndex: null,
+      subfeatureIndex: null,
+      description: "",
+    });
+
+    loadAnalysis();
+
+    // Cleanup function
+    return () => controller.abort();
+  }, [currentProject?._id]); // Only depend on the ID
+
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setError("");
     setSuccess("");
@@ -94,10 +163,11 @@ export default function RequirementAnalyzer() {
     setError("");
     setSuccess("");
 
+    const projectId = currentProject._id; // Capture the project ID at the start
     const formData = new FormData();
     formData.append("file", selectedFile);
     formData.append("requirementText", requirementText);
-    formData.append("projectId", currentProject._id);
+    formData.append("projectId", projectId);
 
     try {
       const response = await fetch(
@@ -112,17 +182,41 @@ export default function RequirementAnalyzer() {
         }
       );
 
-      console.log("Response status:", response.status);
-      console.log(response);
-
       if (!response.ok) {
-        throw new Error(`Please Upload a file`);
+        throw new Error("Please Upload a file");
       }
 
       const result: AnalysisResponse = await response.json();
       setSuccess(result.message);
       setSelectedFile(null);
       setRequirementText("");
+
+      // Fetch and show results immediately
+      const analysisResponse = await fetch(
+        `http://localhost:8080/requirment-analysis/${projectId}`,
+        {
+          credentials: "include",
+          headers: { Accept: "application/json" },
+        }
+      );
+
+      if (analysisResponse.ok) {
+        const analysisResult: AnalysisResult = await analysisResponse.json();
+        if (currentProject._id === projectId) {
+          // Check if project is still the same
+          setAnalysisResults(analysisResult);
+          if (
+            analysisResult &&
+            analysisResult.functionalRequirement &&
+            analysisResult.functionalRequirement.length > 0
+          ) {
+            setShowInputSection(false);
+          } else {
+            setShowInputSection(true);
+          }
+        }
+      }
+
       // Reset file input
       const fileInput = document.getElementById(
         "file-upload"
@@ -143,12 +237,14 @@ export default function RequirementAnalyzer() {
       setError("Please select a project first");
       return;
     }
+
+    const projectId = currentProject._id; // Capture the project ID at the start
     setIsLoading(true);
     setError("");
 
     try {
       const response = await fetch(
-        `http://localhost:8080/requirment-analysis/${currentProject._id}`,
+        `http://localhost:8080/requirment-analysis/${projectId}`,
         {
           method: "GET",
           credentials: "include",
@@ -158,15 +254,24 @@ export default function RequirementAnalyzer() {
         }
       );
 
-      console.log("Response status:", response.status);
-      console.log(response);
-
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
 
       const result: AnalysisResult = await response.json();
-      setAnalysisResults(result);
+      if (currentProject._id === projectId) {
+        // Check if project is still the same
+        setAnalysisResults(result);
+        if (
+          result &&
+          result.functionalRequirement &&
+          result.functionalRequirement.length > 0
+        ) {
+          setShowInputSection(false);
+        } else {
+          setShowInputSection(true);
+        }
+      }
     } catch (err) {
       console.error("Error fetching results:", err);
       setError(
@@ -176,6 +281,15 @@ export default function RequirementAnalyzer() {
       setIsLoading(false);
     }
   };
+
+  const renderModifyButton = () => (
+    <button
+      onClick={() => setShowInputSection(true)}
+      className="fixed bottom-6 right-6 p-3 bg-blue-600 text-white rounded-full shadow-lg hover:bg-blue-700 transition-colors duration-200"
+    >
+      <PencilIcon className="w-5 h-5" />
+    </button>
+  );
 
   const renderAnalysisResults = () => {
     if (!analysisResults) return null;
@@ -208,7 +322,6 @@ export default function RequirementAnalyzer() {
             ))}
           </ul>
         </div>
-
         {/* Non-Functional Requirements */}
         <div className="bg-white p-6 rounded-lg shadow-md">
           <h3 className="text-xl font-semibold text-gray-700 mb-4 flex items-center">
@@ -235,7 +348,6 @@ export default function RequirementAnalyzer() {
             ))}
           </ul>
         </div>
-        
         {/* Feature Breakdown */}
         <div className="bg-white p-6 rounded-lg shadow-md">
           <h3 className="text-xl font-semibold text-gray-700 mb-6 flex items-center">
@@ -254,7 +366,6 @@ export default function RequirementAnalyzer() {
             </svg>
             Feature Breakdown
           </h3>
-
           <div className="space-y-8">
             {analysisResults?.featureBreakdown?.map((module, moduleIndex) => (
               <div key={moduleIndex}>
@@ -293,22 +404,12 @@ export default function RequirementAnalyzer() {
                               {isActive ? "▲" : "▼"}
                             </span>
                           </h4>
-
-                          {/* Desktop Hover Tooltip */}
-                          <div className="hidden lg:group-hover:block absolute z-10 w-64 p-4 mt-2 bg-gray-900 text-white text-sm rounded-lg shadow-lg -translate-x-1/4 left-1/2 transform opacity-0 group-hover:opacity-100 transition-all duration-200">
-                            {feature.description}
-                            <div className="absolute -top-2 left-1/2 transform -translate-x-1/2 w-0 h-0 border-8 border-transparent border-b-gray-900" />
-                          </div>
-
-                          {/* Mobile Click Description */}
                           {isActive && (
                             <div className="lg:hidden mt-2 p-2 text-sm text-gray-600 border-t border-gray-200">
                               {feature.description}
                             </div>
                           )}
                         </div>
-
-                        {/* Collapsible Subfeatures */}
                         {isActive &&
                           feature.subfeatures &&
                           feature.subfeatures.length > 0 && (
@@ -336,186 +437,189 @@ export default function RequirementAnalyzer() {
             ))}
           </div>
         </div>
-        ;
       </div>
     );
   };
-  if (!currentProject) {
-    return (
-      <div className="p-6 bg-white shadow-md rounded-lg">
-        <div className="text-center text-gray-600">
-          Please select a project to proceed
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="p-6 bg-white shadow-md rounded-lg">
-      <h2 className="text-2xl font-bold mb-4">Input Requirements</h2>
-
-      <div
-        className={`border-2 border-dashed p-6 text-center rounded-2xl ${
-          error ? "border-red-500 bg-red-50" : ""
-        }`}
-        style={{
-          borderColor: error ? "#EF4444" : "#FF5B27",
-          backgroundColor: error
-            ? "rgba(239, 68, 68, 0.1)"
-            : "rgba(255, 91, 39, 0.1)",
-        }}
-      >
-        <input
-          type="file"
-          className="hidden"
-          id="file-upload"
-          accept=".pdf,.doc,.docx"
-          onChange={handleFileChange}
-        />
-        <label
-          htmlFor="file-upload"
-          className="cursor-pointer px-4 py-2 rounded"
-          style={{
-            backgroundColor: "#FF5B27",
-            color: "white",
-          }}
-        >
-          Browse Files
-        </label>
-        <p className="mt-2 text-gray-600">
-          Drag and drop PDF or Word documents here
-        </p>
-        {selectedFile && (
-          <p className="mt-2 text-gray-800 font-medium">
-            Selected File: {selectedFile.name}
-          </p>
-        )}
-      </div>
-
-      <div className="mt-4">
-        <p className="text-gray-600 mb-2">
-          Optional: Add additional requirements
-        </p>
-        <textarea
-          value={requirementText}
-          onChange={handleTextChange}
-          placeholder="Paste additional requirements text here... (optional)"
-          className="w-full p-2 border min-h-[100px] rounded-2xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-        />
-      </div>
-
-      <button
-        onClick={handleSubmit}
-        disabled={!selectedFile || isLoading}
-        className={`mt-4 px-4 py-2 rounded text-white transition-colors duration-200 flex items-center justify-center ${
-          selectedFile && !isLoading
-            ? "bg-blue-600 hover:bg-blue-700 cursor-pointer"
-            : "bg-gray-400 cursor-not-allowed"
-        }`}
-      >
-        {isLoading ? (
-          <>
-            <svg
-              className="animate-spin -ml-1 mr-3 h-5 w-5 text-white"
-              xmlns="http://www.w3.org/2000/svg"
-              fill="none"
-              viewBox="0 0 24 24"
-            >
-              <circle
-                className="opacity-25"
-                cx="12"
-                cy="12"
-                r="10"
-                stroke="currentColor"
-                strokeWidth="4"
-              ></circle>
-              <path
-                className="opacity-75"
-                fill="currentColor"
-                d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-              ></path>
-            </svg>
-            Processing...
-          </>
-        ) : (
-          "Process Requirements"
-        )}
-      </button>
-
-      {error && (
-        <div className="mt-4 p-4 bg-red-50 border border-red-200 rounded-lg">
-          <div className="flex items-center">
-            <svg
-              className="h-5 w-5 text-red-600 mr-2"
-              fill="currentColor"
-              viewBox="0 0 20 20"
-            >
-              <path
-                fillRule="evenodd"
-                d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
-                clipRule="evenodd"
-              />
-            </svg>
-            <p className="text-red-600">{error}</p>
-          </div>
+      {!currentProject ? (
+        <div className="text-center text-gray-600">
+          Please select a project to proceed
         </div>
-      )}
-
-      {success && (
-        <div className="mt-4 p-4 bg-green-50 border border-green-200 rounded-lg">
-          <div className="flex items-center">
-            <svg
-              className="h-5 w-5 text-green-600 mr-2"
-              fill="currentColor"
-              viewBox="0 0 20 20"
-            >
-              <path
-                fillRule="evenodd"
-                d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
-                clipRule="evenodd"
-              />
-            </svg>
-            <p className="text-green-600">{success}</p>
-          </div>
+      ) : isAnalysisLoading ? (
+        <div className="flex items-center justify-center p-8">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500" />
         </div>
-      )}
-
-      <button
-        onClick={handleGetResults}
-        disabled={isLoading}
-        className="mt-4 px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 transition-colors duration-200 flex items-center justify-center cursor-pointer"
-      >
-        {isLoading ? (
-          <>
-            <svg
-              className="animate-spin -ml-1 mr-3 h-5 w-5 text-white"
-              xmlns="http://www.w3.org/2000/svg"
-              fill="none"
-              viewBox="0 0 24 24"
+      ) : showInputSection ? (
+        <>
+          <h2 className="text-2xl font-bold mb-4">Input Requirements</h2>
+          <div
+            className={`border-2 border-dashed p-6 text-center rounded-2xl ${
+              error ? "border-red-500 bg-red-50" : ""
+            }`}
+            style={{
+              borderColor: error ? "#EF4444" : "#FF5B27",
+              backgroundColor: error
+                ? "rgba(239, 68, 68, 0.1)"
+                : "rgba(255, 91, 39, 0.1)",
+            }}
+          >
+            <input
+              type="file"
+              className="hidden"
+              id="file-upload"
+              accept=".pdf,.doc,.docx"
+              onChange={handleFileChange}
+            />
+            <label
+              htmlFor="file-upload"
+              className="cursor-pointer px-4 py-2 rounded"
+              style={{
+                backgroundColor: "#FF5B27",
+                color: "white",
+              }}
             >
-              <circle
-                className="opacity-25"
-                cx="12"
-                cy="12"
-                r="10"
-                stroke="currentColor"
-                strokeWidth="4"
-              ></circle>
-              <path
-                className="opacity-75"
-                fill="currentColor"
-                d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-              ></path>
-            </svg>
-            Fetching Results...
-          </>
-        ) : (
-          "Get Analysis Results"
-        )}
-      </button>
+              Browse Files
+            </label>
+            <p className="mt-2 text-gray-600">
+              Drag and drop PDF or Word documents here
+            </p>
+            {selectedFile && (
+              <p className="mt-2 text-gray-800 font-medium">
+                Selected File: {selectedFile.name}
+              </p>
+            )}
+          </div>
 
-      {/* Render analysis results */}
-      {renderAnalysisResults()}
+          <div className="mt-4">
+            <p className="text-gray-600 mb-2">
+              Optional: Add additional requirements
+            </p>
+            <textarea
+              value={requirementText}
+              onChange={handleTextChange}
+              placeholder="Paste additional requirements text here... (optional)"
+              className="w-full p-2 border min-h-[100px] rounded-2xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            />
+          </div>
+
+          <button
+            onClick={handleSubmit}
+            disabled={!selectedFile || isLoading}
+            className={`mt-4 px-4 py-2 rounded text-white transition-colors duration-200 flex items-center justify-center ${
+              selectedFile && !isLoading
+                ? "bg-blue-600 hover:bg-blue-700 cursor-pointer"
+                : "bg-gray-400 cursor-not-allowed"
+            }`}
+          >
+            {isLoading ? (
+              <>
+                <svg
+                  className="animate-spin -ml-1 mr-3 h-5 w-5 text-white"
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                >
+                  <circle
+                    className="opacity-25"
+                    cx="12"
+                    cy="12"
+                    r="10"
+                    stroke="currentColor"
+                    strokeWidth="4"
+                  ></circle>
+                  <path
+                    className="opacity-75"
+                    fill="currentColor"
+                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                  ></path>
+                </svg>
+                Processing...
+              </>
+            ) : (
+              "Process Requirements"
+            )}
+          </button>
+
+          {error && (
+            <div className="mt-4 p-4 bg-red-50 border border-red-200 rounded-lg">
+              <div className="flex items-center">
+                <svg
+                  className="h-5 w-5 text-red-600 mr-2"
+                  fill="currentColor"
+                  viewBox="0 0 20 20"
+                >
+                  <path
+                    fillRule="evenodd"
+                    d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
+                    clipRule="evenodd"
+                  />
+                </svg>
+                <p className="text-red-600">{error}</p>
+              </div>
+            </div>
+          )}
+
+          {success && (
+            <div className="mt-4 p-4 bg-green-50 border border-green-200 rounded-lg">
+              <div className="flex items-center">
+                <svg
+                  className="h-5 w-5 text-green-600 mr-2"
+                  fill="currentColor"
+                  viewBox="0 0 20 20"
+                >
+                  <path
+                    fillRule="evenodd"
+                    d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                    clipRule="evenodd"
+                  />
+                </svg>
+                <p className="text-green-600">{success}</p>
+              </div>
+            </div>
+          )}
+
+          <button
+            onClick={handleGetResults}
+            disabled={isLoading}
+            className="mt-4 px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 transition-colors duration-200 flex items-center justify-center cursor-pointer"
+          >
+            {isLoading ? (
+              <>
+                <svg
+                  className="animate-spin -ml-1 mr-3 h-5 w-5 text-white"
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                >
+                  <circle
+                    className="opacity-25"
+                    cx="12"
+                    cy="12"
+                    r="10"
+                    stroke="currentColor"
+                    strokeWidth="4"
+                  ></circle>
+                  <path
+                    className="opacity-75"
+                    fill="currentColor"
+                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                  ></path>
+                </svg>
+                Fetching Results...
+              </>
+            ) : (
+              "Get Analysis Results"
+            )}
+          </button>
+        </>
+      ) : (
+        <>
+          {renderAnalysisResults()}
+          {renderModifyButton()}
+        </>
+      )}
     </div>
   );
 }
