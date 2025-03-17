@@ -9,6 +9,12 @@ interface SubFeature {
   description: string;
 }
 
+interface TechStackPreference {
+  frontend: string[];
+  backend: string[];
+  database: string[];
+}
+
 interface Feature {
   name: string;
   description: string;
@@ -56,6 +62,35 @@ export default function RequirementAnalyzer() {
     description: "",
   });
   const [isAnalysisLoading, setIsAnalysisLoading] = useState(false);
+  const [platforms, setPlatforms] = useState({
+    web: false,
+    mobile: false,
+  });
+
+  const [techStack, setTechStack] = useState<TechStackPreference>({
+    frontend: [],
+    backend: [],
+    database: [],
+  });
+
+  const [customTechStack, setCustomTechStack] = useState<{
+    frontend: string;
+    backend: string;
+    database: string;
+  }>({
+    frontend: "",
+    backend: "",
+    database: "",
+  });
+  const [showCustomInput, setShowCustomInput] = useState<{
+    frontend: boolean;
+    backend: boolean;
+    database: boolean;
+  }>({
+    frontend: false,
+    backend: false,
+    database: false,
+  });
 
   useEffect(() => {
     const controller = new AbortController(); // For cleanup
@@ -125,6 +160,43 @@ export default function RequirementAnalyzer() {
     return () => controller.abort();
   }, [currentProject?._id]); // Only depend on the ID
 
+  const handlePlatformChange = (platform: "web" | "mobile") => {
+    setPlatforms((prev) => ({
+      ...prev,
+      [platform]: !prev[platform],
+    }));
+  };
+
+  const handleTechStackChange = (
+    category: keyof TechStackPreference,
+    value: string
+  ) => {
+    if (value === "Other") {
+      setShowCustomInput((prev) => ({
+        ...prev,
+        [category]: !prev[category],
+      }));
+      return;
+    }
+
+    setTechStack((prev) => ({
+      ...prev,
+      [category]: prev[category].includes(value)
+        ? prev[category].filter((tech) => tech !== value)
+        : [...prev[category], value],
+    }));
+  };
+
+  const handleCustomTechStackChange = (
+    category: keyof TechStackPreference,
+    value: string
+  ) => {
+    setCustomTechStack((prev) => ({
+      ...prev,
+      [category]: value,
+    }));
+  };
+
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setError("");
     setSuccess("");
@@ -163,11 +235,28 @@ export default function RequirementAnalyzer() {
     setError("");
     setSuccess("");
 
+    const techStackWithCustom = {
+      frontend: [
+        ...techStack.frontend,
+        ...(customTechStack.frontend ? [customTechStack.frontend] : []),
+      ],
+      backend: [
+        ...techStack.backend,
+        ...(customTechStack.backend ? [customTechStack.backend] : []),
+      ],
+      database: [
+        ...techStack.database,
+        ...(customTechStack.database ? [customTechStack.database] : []),
+      ],
+    };
+
     const projectId = currentProject._id; // Capture the project ID at the start
     const formData = new FormData();
     formData.append("file", selectedFile);
     formData.append("requirementText", requirementText);
     formData.append("projectId", projectId);
+    formData.append("platforms", JSON.stringify(platforms));
+    formData.append("techStack", JSON.stringify(techStackWithCustom));
 
     try {
       const response = await fetch(
@@ -469,19 +558,175 @@ export default function RequirementAnalyzer() {
               </p>
             )}
           </div>
-
-          <div className="mt-4">
-            <p className="text-gray-600 mb-2">
-              Optional: Add additional requirements
-            </p>
-            <textarea
-              value={requirementText}
-              onChange={handleTextChange}
-              placeholder="Paste additional requirements text here... (optional)"
-              className="w-full p-2 border min-h-[100px] rounded-2xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            />
+          {/* Platform Selection with improved UI */}
+          <div className="mt-8 mb-6 bg-white p-6 rounded-lg border border-gray-200">
+            <h3 className="text-lg font-semibold text-gray-700 mb-4 flex items-center">
+              <svg
+                className="w-5 h-5 mr-2 text-blue-500"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth="2"
+                  d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
+                />
+              </svg>
+              Platform Selection
+            </h3>
+            <div className="flex flex-col sm:flex-row gap-4">
+              {[
+                { id: "web", label: "Web Application", icon: "🌐" },
+                { id: "mobile", label: "Mobile Application", icon: "📱" },
+              ].map((platform) => (
+                <label
+                  key={platform.id}
+                  className={`flex-1 flex items-center p-4 rounded-lg border-2 transition-all cursor-pointer ${
+                    platforms[platform.id as keyof typeof platforms]
+                      ? "border-blue-500 bg-blue-50"
+                      : "border-gray-200 hover:border-blue-200"
+                  }`}
+                >
+                  <input
+                    type="checkbox"
+                    checked={platforms[platform.id as keyof typeof platforms]}
+                    onChange={() =>
+                      handlePlatformChange((platform.id as "web") || "mobile")
+                    }
+                    className="sr-only"
+                  />
+                  <span className="mr-3 text-xl">{platform.icon}</span>
+                  <span className="font-medium text-gray-700">
+                    {platform.label}
+                  </span>
+                </label>
+              ))}
+            </div>
           </div>
 
+          {/* Tech Stack Selection with improved UI */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6 ">
+            {/* Text Area - Left Column */}
+            <div className="bg-white p-6 rounded-lg border border-gray-200">
+              <p className="text-gray-600 mb-2 font-medium">
+                Additional Requirements
+              </p>
+              <textarea
+                value={requirementText}
+                onChange={handleTextChange}
+                placeholder="Paste additional requirements text here... (optional)"
+                className="w-full p-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent min-h-[200px] resize-none"
+              />
+            </div>
+
+            {/* Tech Stack Preferences - Right Column */}
+            <div className="bg-white p-6 rounded-lg border border-gray-200">
+              <h3 className="text-lg font-semibold text-gray-700 mb-4 flex items-center">
+                <svg
+                  className="w-5 h-5 mr-2 text-blue-500"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth="2"
+                    d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"
+                  />
+                </svg>
+                Tech Stack Preferences
+              </h3>
+
+              <div className="space-y-6">
+                {[
+                  {
+                    category: "frontend",
+                    label: "Frontend",
+                    options: ["React", "Angular", "Vue", "Next.js"],
+                  },
+                  {
+                    category: "backend",
+                    label: "Backend",
+                    options: ["Node.js", "Python", "Java", ".NET"],
+                  },
+                  {
+                    category: "database",
+                    label: "Database",
+                    options: ["MongoDB", "PostgreSQL", "MySQL", "Redis"],
+                  },
+                ].map(({ category, label, options }) => (
+                  <div key={category} className="space-y-2">
+                    <p className="text-sm font-medium text-gray-600">{label}</p>
+                    <div className="flex flex-wrap gap-2">
+                      {[...options, "Other"].map((tech) => (
+                        <label
+                          key={tech}
+                          className={`inline-flex items-center px-3 py-1.5 rounded-full border transition-colors ${
+                            tech === "Other"
+                              ? showCustomInput[
+                                  category as keyof typeof showCustomInput
+                                ]
+                                ? "bg-blue-100 border-blue-300"
+                                : "border-gray-300 hover:border-blue-300"
+                              : techStack[
+                                  category as keyof TechStackPreference
+                                ].includes(tech)
+                              ? "bg-blue-100 border-blue-300"
+                              : "border-gray-300 hover:border-blue-300"
+                          }`}
+                        >
+                          <input
+                            type="checkbox"
+                            checked={
+                              tech === "Other"
+                                ? showCustomInput[
+                                    category as keyof typeof showCustomInput
+                                  ]
+                                : techStack[
+                                    category as keyof TechStackPreference
+                                  ].includes(tech)
+                            }
+                            onChange={() =>
+                              handleTechStackChange(
+                                category as keyof TechStackPreference,
+                                tech
+                              )
+                            }
+                            className="sr-only"
+                          />
+                          <span className="text-sm text-gray-700">{tech}</span>
+                        </label>
+                      ))}
+                    </div>
+                    {showCustomInput[
+                      category as keyof typeof showCustomInput
+                    ] && (
+                      <input
+                        type="text"
+                        value={
+                          customTechStack[
+                            category as keyof typeof customTechStack
+                          ]
+                        }
+                        onChange={(e) =>
+                          handleCustomTechStackChange(
+                            category as keyof TechStackPreference,
+                            e.target.value
+                          )
+                        }
+                        placeholder={`Enter ${label.toLowerCase()} technology`}
+                        className="w-full p-2 text-sm border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      />
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+          {/* Process Button */}
           <button
             onClick={handleSubmit}
             disabled={!selectedFile || isLoading}
