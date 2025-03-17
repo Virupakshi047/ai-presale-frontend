@@ -3,6 +3,10 @@
 import { useState, useEffect } from "react";
 import { User, ChevronRight, X, ArrowDown, CheckCircle } from "lucide-react";
 import { useProject } from "@/context/ProjectContext";
+import Slider from "react-slick";
+import "slick-carousel/slick/slick.css";
+import "slick-carousel/slick/slick-theme.css";
+import { ChevronLeft, ChevronRight as ChevronRightIcon } from "lucide-react";
 
 interface BaseFeature {
   feature: string;
@@ -57,6 +61,24 @@ interface ComponentState {
   personas: Persona[];
   featureCategories: FeatureCategories | null;
 }
+
+const NextArrow = ({ onClick }: { onClick?: () => void }) => (
+  <button
+    onClick={onClick}
+    className="absolute -right-4 top-1/2 -translate-y-1/2 z-20 p-1.5 rounded-full bg-white shadow-lg text-gray-600 hover:text-blue-600 transition-colors"
+  >
+    <ChevronRightIcon className="w-5 h-5" />
+  </button>
+);
+
+const PrevArrow = ({ onClick }: { onClick?: () => void }) => (
+  <button
+    onClick={onClick}
+    className="absolute -left-4 top-1/2 -translate-y-1/2 z-20 p-1.5 rounded-full bg-white shadow-lg text-gray-600 hover:text-blue-600 transition-colors"
+  >
+    <ChevronLeft className="w-5 h-5" />
+  </button>
+);
 
 export default function AIBusinessAnalyst() {
   const { currentProject } = useProject();
@@ -313,10 +335,10 @@ export default function AIBusinessAnalyst() {
         )}
       </div>
       <div>
-        <h2 className="text-2xl font-bold text-gray-800 mb-6">
+        <h2 className="text-2xl md:text-3xl font-bold text-gray-800 mb-6">
           Feature Categories
         </h2>
-        <div className="grid md:grid-cols-3 gap-6">
+        <div className="space-y-8">
           {data.featureCategories &&
             [
               {
@@ -343,44 +365,77 @@ export default function AIBusinessAnalyst() {
                 textColor: "text-green-700",
                 showExtras: false,
               },
-            ].map((category, idx) => (
+            ].map((category) => (
               <div
                 key={category.title}
-                className={`${category.lightBg} rounded-lg p-6 max-h-[calc(100vh-16rem)] overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 hover:scrollbar-thumb-gray-400 transition-all duration-200`}
+                className={`${category.lightBg} rounded-lg p-4 md:p-6`}
               >
-                <div
-                  className={`${category.bgColor} text-white rounded-lg p-3 mb-4 sticky top-0 shadow-sm z-10`}
-                >
-                  <h3 className="font-semibold">{category.title}</h3>
+                <div className="flex justify-center mb-4">
+                  <div
+                    className={`${category.bgColor} text-white rounded-lg p-3 sticky top-0 shadow-sm z-10 w-fit`}
+                  >
+                    <h3 className="font-semibold text-base md:text-lg">
+                      {category.title}
+                    </h3>
+                  </div>
                 </div>
-                <div className="space-y-4">
-                  {category.features.map((feature, index) => (
-                    <div
-                      key={index}
-                      className="bg-white rounded-lg p-4 shadow-sm hover:shadow-lg transition-all duration-200"
-                    >
-                      <h4 className={`${category.textColor} font-medium mb-2`}>
-                        {feature.feature}
-                      </h4>
-                      <p className="text-gray-600 text-sm">
-                        {feature.description}
-                      </p>
-                      {category.showExtras && "rationale" in feature && (
-                        <p className="text-gray-500 text-sm mt-2 pt-2 border-t">
-                          <span className="font-medium">Rationale:</span>{" "}
-                          {(feature as MustHaveFeature).rationale}
-                        </p>
-                      )}
-                      {category.showExtras && "business_impact" in feature && (
-                        <div className="mt-2">
-                          <span className="px-2 py-1 text-xs rounded bg-orange-100 text-orange-700">
-                            Impact:{" "}
-                            {(feature as MustHaveFeature).business_impact}
-                          </span>
+                <div className="relative px-4">
+                  <Slider
+                    dots={true}
+                    infinite={false}
+                    speed={500}
+                    slidesToShow={3}
+                    slidesToScroll={1}
+                    nextArrow={<NextArrow />}
+                    prevArrow={<PrevArrow />}
+                    className="feature-slider"
+                    responsive={[
+                      {
+                        breakpoint: 1024,
+                        settings: {
+                          slidesToShow: 2,
+                          slidesToScroll: 1,
+                        },
+                      },
+                      {
+                        breakpoint: 640,
+                        settings: {
+                          slidesToShow: 1,
+                          slidesToScroll: 1,
+                        },
+                      },
+                    ]}
+                  >
+                    {category.features.map((feature, index) => (
+                      <div key={index} className="px-2">
+                        <div className="bg-white rounded-lg p-4 shadow-sm hover:shadow-lg transition-all duration-200 h-full">
+                          <h4
+                            className={`${category.textColor} font-medium mb-2 text-sm md:text-base`}
+                          >
+                            {feature.feature}
+                          </h4>
+                          <p className="text-gray-600 text-xs md:text-sm">
+                            {feature.description}
+                          </p>
+                          {category.showExtras && "rationale" in feature && (
+                            <p className="text-gray-500 text-xs md:text-sm mt-2 pt-2 border-t">
+                              <span className="font-medium">Rationale:</span>{" "}
+                              {(feature as MustHaveFeature).rationale}
+                            </p>
+                          )}
+                          {category.showExtras &&
+                            "business_impact" in feature && (
+                              <div className="mt-2">
+                                <span className="px-2 py-1 text-xs rounded bg-orange-100 text-orange-700">
+                                  Impact:{" "}
+                                  {(feature as MustHaveFeature).business_impact}
+                                </span>
+                              </div>
+                            )}
                         </div>
-                      )}
-                    </div>
-                  ))}
+                      </div>
+                    ))}
+                  </Slider>
                 </div>
               </div>
             ))}
