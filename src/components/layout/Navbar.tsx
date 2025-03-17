@@ -1,14 +1,42 @@
 import Image from "next/image";
 import { User, Bell, Settings, LogOut, Home } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+
+interface UserData {
+  name: string;
+  email: string;
+  role: string;
+}
 
 export default function Navbar() {
   const [showProfileMenu, setShowProfileMenu] = useState(false);
+  const [userData, setUserData] = useState<UserData | null>(null);
+  const router = useRouter();
 
-  const handleLogout = () => {
-    // Add logout logic here
-    console.log("Logging out...");
+  useEffect(() => {
+    const storedData = localStorage.getItem("userData");
+    if (storedData) {
+      setUserData(JSON.parse(storedData));
+    }
+  }, []);
+
+  const handleLogout = async () => {
+    try {
+      const response = await fetch("http://localhost:8080/auth/logout", {
+        credentials: "include",
+      });
+
+      if (response.ok) {
+        localStorage.removeItem("userData");
+        router.push("/login");
+      } else {
+        console.error("Logout failed");
+      }
+    } catch (error) {
+      console.error("Logout error:", error);
+    }
   };
 
   return (
@@ -52,18 +80,26 @@ export default function Navbar() {
         <div className="relative">
           <button
             onClick={() => setShowProfileMenu(!showProfileMenu)}
-            className="w-10 h-10 bg-blue-500 rounded-full flex items-center justify-center hover:bg-blue-600 transition-colors"
+            className="flex items-center space-x-2"
           >
-            <User className="text-white" />
+            <div className="w-10 h-10 bg-blue-500 rounded-full flex items-center justify-center hover:bg-blue-600 transition-colors">
+              <User className="text-white" />
+            </div>
+            <span className="text-gray-700 hidden md:inline">
+              {userData?.name || "User"}
+            </span>
           </button>
 
           {/* Dropdown Menu */}
           {showProfileMenu && (
             <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg py-2 border border-gray-100">
-              <button className="flex items-center w-full px-4 py-2 text-gray-700 hover:bg-gray-50 cursor-pointer">
-                <User size={16} className="mr-2 cursor-pointer" />
+              <Link
+                href="/profile"
+                className="flex items-center w-full px-4 py-2 text-gray-700 hover:bg-gray-50 cursor-pointer"
+              >
+                <User size={16} className="mr-2" />
                 Profile
-              </button>
+              </Link>
               <button className="flex items-center w-full px-4 py-2 text-gray-700 hover:bg-gray-50">
                 <Settings size={16} className="mr-2" />
                 Settings

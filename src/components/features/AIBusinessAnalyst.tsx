@@ -79,17 +79,35 @@ export default function AIBusinessAnalyst() {
 
       setIsLoading(true);
       try {
+        // First, check if we have a valid token in localStorage
+        const userData = localStorage.getItem("userData");
+        if (!userData) {
+          throw new Error("No authentication data found");
+        }
+
         const response = await fetch(
-          `http://localhost:8080/user-persona/${currentProject._id}`
+          `http://localhost:8080/user-persona/${currentProject._id}`,
+          {
+            credentials: "include",
+            headers: {
+              Accept: "application/json",
+              "Content-Type": "application/json",
+            },
+          }
         );
-        console.log("this is after fectching line");
-        console.log(response);
 
         if (!response.ok) {
-          throw new Error("Failed to fetch user persona");
+          const errorData = await response.json();
+          throw new Error(errorData.message || "Failed to fetch user persona");
         }
 
         const responseData: UserPersonaResponse = await response.json();
+        console.log("User Persona Data:", responseData);
+
+        if (!responseData.userPersona) {
+          throw new Error("Invalid response format");
+        }
+
         setData({
           personas: responseData.userPersona.personas,
           featureCategories:
@@ -97,8 +115,19 @@ export default function AIBusinessAnalyst() {
         });
         setError(null);
       } catch (err) {
-        setError("Failed to fetch user persona data");
-        console.error("Error fetching user persona:", err);
+        console.error("Error details:", err);
+        if (err instanceof Error) {
+          if (err.message.includes("authentication")) {
+            // Handle authentication errors
+            setError("Please login again");
+            // Optionally redirect to login
+            window.location.href = "/login";
+          } else {
+            setError(`Failed to fetch user persona: ${err.message}`);
+          }
+        } else {
+          setError("An unexpected error occurred");
+        }
       } finally {
         setIsLoading(false);
       }

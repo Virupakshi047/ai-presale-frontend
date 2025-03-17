@@ -8,7 +8,21 @@ import Link from "next/link";
 interface LoginForm {
   email: string;
   password: string;
-  role: "Project Head" | "Project Associate" | "JrDev" | "";
+}
+
+interface LoginResponse {
+  message: string;
+  user: {
+    name: string;
+    email: string;
+    role: string;
+  };
+}
+
+interface UserData {
+  name: string;
+  email: string;
+  role: string;
 }
 
 export default function LoginPage() {
@@ -17,7 +31,6 @@ export default function LoginPage() {
   const [formData, setFormData] = useState<LoginForm>({
     email: "",
     password: "",
-    role: "",
   });
   const [error, setError] = useState<string>("");
 
@@ -25,17 +38,46 @@ export default function LoginPage() {
     e.preventDefault();
     setError("");
 
-    if (!formData.email || !formData.password || !formData.role) {
+    if (!formData.email || !formData.password) {
       setError("All fields are required");
       return;
     }
 
     try {
-      // TODO: Replace with actual API endpoint
-      console.log("Login attempt:", formData);
-      router.push("/dashboard");
+      const response = await fetch("http://localhost:8080/auth/login", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(formData),
+        credentials: "include", // Important for handling cookies
+      });
+
+      const data: LoginResponse = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || "Login failed");
+      }
+
+      // Store user data in localStorage
+      const userData: UserData = {
+        name: data.user.name,
+        email: data.user.email,
+        role: data.user.role,
+      };
+      localStorage.setItem("userData", JSON.stringify(userData));
+
+      // Check if user is head and redirect accordingly
+      if (data.user.role === "head") {
+        router.push("/dashboard");
+      } else {
+        setError("Access denied. Only head role is allowed.");
+        localStorage.removeItem("userData"); // Clear storage if access denied
+      }
     } catch (err) {
-      setError("Invalid credentials");
+      console.error("Login error:", err);
+      setError(err instanceof Error ? err.message : "Invalid credentials");
+      localStorage.removeItem("userData"); // Clear storage on error
     }
   };
 
@@ -45,7 +87,7 @@ export default function LoginPage() {
         <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
           Login to your account
         </h2>
-        <p className="mt-2 text-center text-sm text-gray-600">
+        {/* <p className="mt-2 text-center text-sm text-gray-600">
           Or{" "}
           <Link
             href="/"
@@ -53,7 +95,7 @@ export default function LoginPage() {
           >
             sign up for a new account
           </Link>
-        </p>
+        </p> */}
       </div>
 
       <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
@@ -118,41 +160,18 @@ export default function LoginPage() {
               </div>
             </div>
 
-            {/* Role Selection */}
-            <div>
-              <label
-                htmlFor="role"
-                className="block text-sm font-medium text-gray-700"
-              >
-                Role
-              </label>
-              <select
-                id="role"
-                name="role"
-                value={formData.role}
-                onChange={(e) =>
-                  setFormData({
-                    ...formData,
-                    role: e.target.value as LoginForm["role"],
-                  })
-                }
-                className="mt-1 block w-full pl-3 pr-10 py-2 text-base border border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md"
-              >
-                <option value="">Select a role</option>
-                <option value="Project Head">Project Head</option>
-                <option value="Project Associate">Project Associate</option>
-                <option value="JrDev">Jr. Developer</option>
-              </select>
-            </div>
-
             {/* Error Display */}
-            {error && <div className="text-red-600 text-sm">{error}</div>}
+            {error && (
+              <div className="text-red-600 text-sm">
+                Check email or passowrd!😑
+              </div>
+            )}
 
             {/* Submit Button */}
             <div>
               <button
                 type="submit"
-                className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 cursor-pointer"
               >
                 <LogIn className="h-5 w-5 mr-2" />
                 Login
