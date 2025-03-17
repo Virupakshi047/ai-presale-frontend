@@ -49,9 +49,10 @@ export default function MainBody() {
 
   const tabs = [
     { id: "requirementAnalysis", label: "Requirement Analysis" },
-    { id: "feature1", label: "AI Tech-stack" },
-    { id: "feature2", label: "AI Business Analyst" },
+    { id: "feature1", label: "Tech-stack" },
+    { id: "feature2", label: "Business Analyst" },
     { id: "feature3", label: "Effort and Cost estimation" },
+    { id: "feature4", label: "Wireframe & UI" },
   ];
   const handleAnalysisResults = (results: AnalysisResult) => {
     setAnalysisResults(results);
@@ -102,6 +103,7 @@ export default function MainBody() {
         {activeTab === "feature1" && <AITechStack />}
         {activeTab === "feature2" && <AIBusinessAnalyst />}
         {activeTab === "feature3" && <EffortAndCost />}
+        {activeTab === "feature4" && <div>Wireframe & UI  </div>}
       </div>
     </div>
   );
