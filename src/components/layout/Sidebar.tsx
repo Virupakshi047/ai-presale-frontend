@@ -31,6 +31,8 @@ export default function Sidebar() {
   const [showModal, setShowModal] = useState(false);
   const [newProjectName, setNewProjectName] = useState("");
   const [isCreating, setIsCreating] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editingName, setEditingName] = useState("");
 
   const router = useRouter();
   const pathname = usePathname();
@@ -122,6 +124,43 @@ export default function Sidebar() {
     }
   };
 
+  const handleEditProject = async (projectId: string, newName: string) => {
+    try {
+      const response = await fetch(
+        `http://localhost:8080/project/${projectId}`,
+        {
+          method: "PUT",
+          credentials: "include",
+          headers: {
+            "Content-Type": "application/json",
+            Accept: "application/json",
+          },
+          body: JSON.stringify({ name: newName }),
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error("Failed to update project");
+      }
+
+      // Update projects list with new name
+      setProjects((prev) =>
+        prev.map((p) => (p._id === projectId ? { ...p, name: newName } : p))
+      );
+
+      // Reset editing state
+      setEditingId(null);
+      setEditingName("");
+
+      // Update URL if this was the active project
+      if (activeProject === projects.find((p) => p._id === projectId)?.name) {
+        router.push(`/dashboard/${encodeURIComponent(newName)}`);
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Error updating project");
+    }
+  };
+
   // Add delete handler function inside Sidebar component
   const handleDeleteProject = async (
     projectId: string,
@@ -208,33 +247,97 @@ export default function Sidebar() {
               <li
                 key={project._id}
                 className={`group p-3 rounded-lg cursor-pointer transition-all duration-200 relative
-                ${
-                  activeProject === project.name
-                    ? "bg-blue-100 text-blue-700 font-medium shadow-sm"
-                    : "hover:bg-gray-200"
-                }`}
+              ${
+                activeProject === project.name
+                  ? "bg-blue-100 text-blue-700 font-medium shadow-sm"
+                  : "hover:bg-gray-200"
+              }`}
               >
                 <div className="flex items-center justify-between">
-                  <span
-                    onClick={() => {
-                      const encodedProject = encodeURIComponent(project.name);
-                      router.push(`/dashboard/${encodedProject}`);
-                      setIsOpen(false);
-                    }}
-                    className="flex-1"
-                  >
-                    {project.name}
-                  </span>
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleDeleteProject(project._id, project.name);
-                    }}
-                    className="opacity-0 group-hover:opacity-100 p-1 hover:bg-red-100 rounded transition-all duration-200"
-                    title="Delete project"
-                  >
-                    <Trash2 size={16} className="text-red-500 cursor-pointer" />
-                  </button>
+                  {editingId === project._id ? (
+                    <input
+                      type="text"
+                      value={editingName}
+                      onChange={(e) => setEditingName(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter" && editingName.trim()) {
+                          handleEditProject(project._id, editingName.trim());
+                        } else if (e.key === "Escape") {
+                          setEditingId(null);
+                          setEditingName("");
+                        }
+                      }}
+                      onBlur={() => {
+                        if (
+                          editingName.trim() &&
+                          editingName !== project.name
+                        ) {
+                          handleEditProject(project._id, editingName.trim());
+                        } else {
+                          setEditingId(null);
+                          setEditingName("");
+                        }
+                      }}
+                      className="flex-1 px-1 bg-transparent border-b border-blue-500 focus:outline-none"
+                      autoFocus
+                    />
+                  ) : (
+                    <span
+                      onClick={() => {
+                        if (!editingId) {
+                          const encodedProject = encodeURIComponent(
+                            project.name
+                          );
+                          router.push(`/dashboard/${encodedProject}`);
+                          setIsOpen(false);
+                        }
+                      }}
+                      onDoubleClick={() => {
+                        setEditingId(project._id);
+                        setEditingName(project.name);
+                      }}
+                      className="flex-1 cursor-text"
+                    >
+                      {project.name}
+                    </span>
+                  )}
+                  <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setEditingId(project._id);
+                        setEditingName(project.name);
+                      }}
+                      className="p-1 hover:bg-blue-100 rounded transition-all duration-200"
+                      title="Edit project name"
+                    >
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        width="16"
+                        height="16"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        className="text-blue-500"
+                      >
+                        <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
+                        <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
+                      </svg>
+                    </button>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleDeleteProject(project._id, project.name);
+                      }}
+                      className="p-1 hover:bg-red-100 rounded transition-all duration-200"
+                      title="Delete project"
+                    >
+                      <Trash2 size={16} className="text-red-500" />
+                    </button>
+                  </div>
                 </div>
               </li>
             ))}
