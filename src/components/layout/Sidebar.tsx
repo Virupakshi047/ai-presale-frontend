@@ -105,10 +105,16 @@ export default function Sidebar() {
       }
 
       const newProject: CreateProjectResponse = await response.json();
+
+      // Update projects list first
       setProjects((prev) => [...prev, newProject]);
       setNewProjectName("");
       setShowModal(false);
-      router.push(`/dashboard/${encodeURIComponent(newProject.name)}`);
+
+      // Force a reload of the page with the new project route
+      window.location.href = `/dashboard/${encodeURIComponent(
+        newProject.name
+      )}`;
     } catch (err) {
       setError(err instanceof Error ? err.message : "Error creating project");
     } finally {

@@ -1,14 +1,14 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import RequirementAnalyzer from "../features/RequirementAnalyzer";
 import AITechStack from "../features/TechStack";
 import { useProject } from "@/context/ProjectContext";
 import AIBusinessAnalyst from "../features/AIBusinessAnalyst";
 import EffortAndCost from "@/components/features/EffortAndCost";
-import WireframeCanvas from "../features/WireframeCanvas";
 import { History, ChevronDown } from "lucide-react";
+import WireframeCanvas from "@/components/features/WireframeCanvas";
 
 interface FeatureBreakdown {
   component: string;
@@ -29,13 +29,13 @@ export default function MainBody() {
   );
   const [showVersions, setShowVersions] = useState(false);
   const pathname = usePathname();
+  const router = useRouter();
   const { currentProject, projects, setCurrentProject } = useProject();
 
   useEffect(() => {
-    // Update current project based on URL and handle initial load
-    if (projects.length > 0) {
+    // Only run if we have projects and pathname
+    if (projects.length > 0 && pathname) {
       if (pathname === "/dashboard") {
-        // Set first project as default if on dashboard
         setCurrentProject(projects[0]);
       } else {
         const projectName = decodeURIComponent(pathname.split("/").pop() || "");
@@ -43,12 +43,12 @@ export default function MainBody() {
         if (project) {
           setCurrentProject(project);
         } else {
-          // Fallback to first project if none matches the URL
-          setCurrentProject(projects[0]);
+          // Only fallback to first project if no matching project is found
+          router.push("/dashboard");
         }
       }
     }
-  }, [pathname, projects, setCurrentProject]);
+  }, [pathname, projects, setCurrentProject, router]);
 
   const tabs = [
     { id: "requirementAnalysis", label: "Requirement Analysis" },
