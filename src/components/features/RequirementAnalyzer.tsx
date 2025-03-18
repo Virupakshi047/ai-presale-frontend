@@ -463,9 +463,12 @@ export default function RequirementAnalyzer() {
                         >
                           <h4 className="font-medium text-gray-800 text-center flex justify-between items-center">
                             {feature.name}
-                            <span className="text-gray-500 text-sm">
-                              {isActive ? "▲" : "▼"}
-                            </span>
+                            {feature.subfeatures &&
+                              feature.subfeatures.length > 0 && (
+                                <span className="text-gray-500 text-sm">
+                                  {isActive ? "▲" : "▼"}
+                                </span>
+                              )}
                           </h4>
                           {isActive && (
                             <div className="lg:hidden mt-2 p-2 text-sm text-gray-600 border-t border-gray-200">
