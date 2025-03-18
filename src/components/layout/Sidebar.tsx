@@ -3,8 +3,18 @@
 import { useRouter, usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import Hamburger from "../ui/Hamburger";
+import { Plus, X, Trash2 } from "lucide-react";
 
 interface Project {
+  _id: string;
+  name: string;
+  requirements: any[];
+  createdBy: string;
+  assignedUsers: string[];
+  createdAt: string;
+}
+
+interface CreateProjectResponse {
   _id: string;
   name: string;
   requirements: any[];
@@ -18,6 +28,9 @@ export default function Sidebar() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string>("");
   const [isOpen, setIsOpen] = useState(false);
+  const [showModal, setShowModal] = useState(false);
+  const [newProjectName, setNewProjectName] = useState("");
+  const [isCreating, setIsCreating] = useState(false);
 
   const router = useRouter();
   const pathname = usePathname();
@@ -67,6 +80,83 @@ export default function Sidebar() {
     setIsOpen(false);
   };
 
+  // Add this function to handle project creation
+  const handleCreateProject = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newProjectName.trim()) return;
+
+    setIsCreating(true);
+    try {
+      const response = await fetch("http://localhost:8080/project", {
+        method: "POST",
+        credentials: "include",
+        headers: {
+          "Content-Type": "application/json",
+          Accept: "application/json",
+        },
+        body: JSON.stringify({
+          name: newProjectName,
+          createdBy: "67d5539c1ae9799ec0e8f377",
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to create project");
+      }
+
+      const newProject: CreateProjectResponse = await response.json();
+      setProjects((prev) => [...prev, newProject]);
+      setNewProjectName("");
+      setShowModal(false);
+      router.push(`/dashboard/${encodeURIComponent(newProject.name)}`);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Error creating project");
+    } finally {
+      setIsCreating(false);
+    }
+  };
+
+  // Add delete handler function inside Sidebar component
+  const handleDeleteProject = async (
+    projectId: string,
+    projectName: string
+  ) => {
+    if (!confirm(`Are you sure you want to delete "${projectName}"?`)) {
+      return;
+    }
+
+    try {
+      const response = await fetch(
+        `http://localhost:8080/project/${projectId}`,
+        {
+          method: "DELETE",
+          credentials: "include",
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error("Failed to delete project");
+      }
+
+      // Remove project from state
+      setProjects((prev) => prev.filter((p) => p._id !== projectId));
+
+      // If deleted project was active, redirect to first available project or dashboard
+      if (activeProject === projectName) {
+        const remainingProjects = projects.filter((p) => p._id !== projectId);
+        if (remainingProjects.length > 0) {
+          router.push(
+            `/dashboard/${encodeURIComponent(remainingProjects[0].name)}`
+          );
+        } else {
+          router.push("/dashboard");
+        }
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Error deleting project");
+    }
+  };
+
   return (
     <>
       {/* Mobile Overlay */}
@@ -91,6 +181,13 @@ export default function Sidebar() {
       >
         <div className="flex items-center justify-between mb-4 sticky top-0 bg-gray-100 py-2">
           <h2 className="text-xl font-bold">Projects</h2>
+          <button
+            onClick={() => setShowModal(true)}
+            className="p-1.5 rounded-full bg-blue-500 text-white hover:bg-blue-600 transition-colors"
+            title="Create new project"
+          >
+            <Plus size={20} className="cursor-pointer" />
+          </button>
         </div>
 
         {isLoading ? (
@@ -104,24 +201,86 @@ export default function Sidebar() {
             {projects.map((project) => (
               <li
                 key={project._id}
-                className={`p-3 rounded-lg cursor-pointer transition-all duration-200
+                className={`group p-3 rounded-lg cursor-pointer transition-all duration-200 relative
                 ${
                   activeProject === project.name
                     ? "bg-blue-100 text-blue-700 font-medium shadow-sm"
                     : "hover:bg-gray-200"
                 }`}
-                onClick={() => {
-                  const encodedProject = encodeURIComponent(project.name);
-                  router.push(`/dashboard/${encodedProject}`);
-                  setIsOpen(false); // Close sidebar on mobile after selection
-                }}
               >
-                {project.name}
+                <div className="flex items-center justify-between">
+                  <span
+                    onClick={() => {
+                      const encodedProject = encodeURIComponent(project.name);
+                      router.push(`/dashboard/${encodedProject}`);
+                      setIsOpen(false);
+                    }}
+                    className="flex-1"
+                  >
+                    {project.name}
+                  </span>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleDeleteProject(project._id, project.name);
+                    }}
+                    className="opacity-0 group-hover:opacity-100 p-1 hover:bg-red-100 rounded transition-all duration-200"
+                    title="Delete project"
+                  >
+                    <Trash2 size={16} className="text-red-500 cursor-pointer" />
+                  </button>
+                </div>
               </li>
             ))}
           </ul>
         )}
       </div>
+
+      {/* Create Project Modal */}
+      {showModal && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center">
+          <div className="bg-white rounded-lg p-6 w-96 relative">
+            <button
+              onClick={() => setShowModal(false)}
+              className="absolute top-4 right-4 text-gray-500 hover:text-gray-700"
+            >
+              <X size={20} />
+            </button>
+
+            <h3 className="text-xl font-semibold mb-4">Create New Project</h3>
+
+            <form onSubmit={handleCreateProject}>
+              <input
+                type="text"
+                value={newProjectName}
+                onChange={(e) => setNewProjectName(e.target.value)}
+                placeholder="Project name"
+                className="w-full p-2 border rounded-lg mb-4 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                autoFocus
+              />
+
+              <button
+                type="submit"
+                disabled={isCreating || !newProjectName.trim()}
+                className={`w-full py-2 px-4 rounded-lg text-white ${
+                  isCreating || !newProjectName.trim()
+                    ? "bg-gray-400 cursor-not-allowed"
+                    : "bg-blue-500 hover:bg-blue-600"
+                }`}
+              >
+                {isCreating ? (
+                  <span className="flex items-center justify-center">
+                    <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2" />
+                    Creating...
+                  </span>
+                ) : (
+                  "Create Project"
+                )}
+              </button>
+            </form>
+          </div>
+        </div>
+      )}
     </>
   );
 }

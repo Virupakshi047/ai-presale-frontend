@@ -7,6 +7,7 @@ import AITechStack from "../features/TechStack";
 import { useProject } from "@/context/ProjectContext";
 import AIBusinessAnalyst from "../features/AIBusinessAnalyst";
 import EffortAndCost from "@/components/features/EffortAndCost";
+import { History, ChevronDown } from "lucide-react";
 
 interface FeatureBreakdown {
   component: string;
@@ -25,6 +26,7 @@ export default function MainBody() {
   const [analysisResults, setAnalysisResults] = useState<AnalysisResult | null>(
     null
   );
+  const [showVersions, setShowVersions] = useState(false);
   const pathname = usePathname();
   const { currentProject, projects, setCurrentProject } = useProject();
 
@@ -70,9 +72,57 @@ export default function MainBody() {
   return (
     <div className="p-6">
       <div className="flex items-center justify-between mb-6">
-        <h1 className="text-3xl font-bold">
-          {currentProject?.name || "Select a Project"}
-        </h1>
+        <div className="flex items-center gap-4">
+          <h1 className="text-3xl font-bold">
+            {currentProject?.name || "Select a Project"}
+          </h1>
+
+          {currentProject && (
+            <div className="relative">
+              <button
+                onClick={() => setShowVersions(!showVersions)}
+                className="flex items-center gap-2 px-3 py-2 text-sm bg-white border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors duration-200 shadow-sm"
+              >
+                <History size={16} className="text-gray-500" />
+                <span>Version 1.0.0</span>
+                <ChevronDown
+                  size={16}
+                  className={`text-gray-500 transition-transform duration-200 ${
+                    showVersions ? "rotate-180" : ""
+                  }`}
+                />
+              </button>
+
+              {showVersions && (
+                <div className="absolute top-full left-0 mt-1 w-64 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-50">
+                  <div className="max-h-64 overflow-y-auto">
+                    {[1, 2, 3].map((version) => (
+                      <button
+                        key={version}
+                        className="w-full px-4 py-2 text-left hover:bg-gray-50 flex items-center justify-between cursor-pointer"
+                      >
+                        <div className="flex flex-col cursor-pointer">
+                          <span className="font-medium">
+                            Version {version}.0.0
+                          </span>
+                          <span className="text-xs text-gray-500">
+                            March 18, 2024 12:00 PM
+                          </span>
+                        </div>
+                        {version === 1 && (
+                          <span className="text-xs bg-blue-100 text-blue-600 px-2 py-1 rounded">
+                            Current
+                          </span>
+                        )}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+
         {currentProject && (
           <span className="text-sm text-gray-500">
             Project ID: {currentProject._id}
@@ -103,7 +153,7 @@ export default function MainBody() {
         {activeTab === "feature1" && <AITechStack />}
         {activeTab === "feature2" && <AIBusinessAnalyst />}
         {activeTab === "feature3" && <EffortAndCost />}
-        {activeTab === "feature4" && <div>Wireframe & UI  </div>}
+        {activeTab === "feature4" && <div>Wireframe & UI </div>}
       </div>
     </div>
   );
