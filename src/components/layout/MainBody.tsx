@@ -7,6 +7,7 @@ import AITechStack from "../features/TechStack";
 import { useProject } from "@/context/ProjectContext";
 import AIBusinessAnalyst from "../features/AIBusinessAnalyst";
 import EffortAndCost from "@/components/features/EffortAndCost";
+import WireframeCanvas from "../features/WireframeCanvas";
 import { History, ChevronDown } from "lucide-react";
 
 interface FeatureBreakdown {
@@ -153,7 +154,7 @@ export default function MainBody() {
         {activeTab === "feature1" && <AITechStack />}
         {activeTab === "feature2" && <AIBusinessAnalyst />}
         {activeTab === "feature3" && <EffortAndCost />}
-        {activeTab === "feature4" && <div>Wireframe & UI </div>}
+        {activeTab === "feature4" && <WireframeCanvas />}
       </div>
     </div>
   );

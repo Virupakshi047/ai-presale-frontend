@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "@tanstack/react-table": "^8.21.2",
+    "fabric": "^6.6.1",
     "framer-motion": "^12.5.0",
     "frontend": "file:",
     "lucide-react": "^0.477.0",
@@ -19,7 +20,9 @@
     "react": "^19.0.0",
     "react-archer": "^4.4.0",
     "react-dom": "^19.0.0",
+    "react-slick": "^0.30.3",
     "react-window": "^1.8.11",
+    "slick-carousel": "^1.8.1",
     "tailwind-scrollbar": "^4.0.1",
     "xlsx": "^0.18.5"
   },
