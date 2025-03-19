@@ -9,6 +9,8 @@ import AIBusinessAnalyst from "../features/AIBusinessAnalyst";
 import EffortAndCost from "@/components/features/EffortAndCost";
 import { History, ChevronDown } from "lucide-react";
 import WireframeCanvas from "@/components/features/WireframeCanvas";
+import AssignProject from "../features/AssignProject";
+import { Toaster } from "react-hot-toast";
 
 interface FeatureBreakdown {
   component: string;
@@ -124,13 +126,15 @@ export default function MainBody() {
           )}
         </div>
 
-        {currentProject && (
-          <span className="text-sm text-gray-500">
-            Project ID: {currentProject._id}
-          </span>
-        )}
+        {currentProject && <AssignProject />}
       </div>
+      <Toaster position="top-right" />
 
+      {currentProject && (
+        <span className="text-sm text-gray-500">
+          Project ID: {currentProject._id}
+        </span>
+      )}
       <div className="mb-4 border-b">
         <nav className="flex space-x-4">
           {tabs.map((tab) => (

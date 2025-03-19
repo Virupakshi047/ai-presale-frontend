@@ -10,31 +10,31 @@ interface Technology {
   description: string;
 }
 
-interface ArchitectureResponse {
-  message: string;
-  architectureDiagram: {
-    _id: string;
-    project: string;
-    diagramData: {
-      nodes: Array<{
-        id: string;
-        attributes: {
-          type: string;
-          technology: string;
-        };
-      }>;
-      edges: Array<{
-        source: string;
-        target: string;
-        attributes: {
-          protocol: string;
-        };
-      }>;
-    };
-    createdAt: string;
-    __v: number;
-  };
-}
+// interface ArchitectureResponse {
+//   message: string;
+//   architectureDiagram: {
+//     _id: string;
+//     project: string;
+//     diagramData: {
+//       nodes: Array<{
+//         id: string;
+//         attributes: {
+//           type: string;
+//           technology: string;
+//         };
+//       }>;
+//       edges: Array<{
+//         source: string;
+//         target: string;
+//         attributes: {
+//           protocol: string;
+//         };
+//       }>;
+//     };
+//     createdAt: string;
+//     __v: number;
+//   };
+// }
 
 interface TechStackData {
   frontend: Technology[];
@@ -63,102 +63,53 @@ const AITechStack: React.FC = () => {
   const { currentProject } = useProject();
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string>("");
-  const [data, setData] = useState<{
-    techStack: TechStackData | null;
-    architecture: ArchitectureResponse | null;
-  }>({
-    techStack: null,
-    architecture: null,
-  });
+  const [techStack, setTechStack] = useState<TechStackData | null>(null);
 
   useEffect(() => {
-    console.log("Fetching data...");
     let isMounted = true;
-    let retries = 3; // Retry mechanism
-    const fetchData = async () => {
+
+    const fetchTechStack = async () => {
       if (!currentProject?._id) {
         setIsLoading(false);
         return;
       }
 
-      setIsLoading(true);
-      setError("");
-
-      while (retries > 0) {
-        try {
-          const [techStackResponse, architectureResponse] = await Promise.all([
-            fetch(
-              `http://localhost:8080/tech-architecture/generate-tech-stack/${currentProject._id}`,
-              {
-                credentials: "include",
-                headers: { Accept: "application/json" },
-              }
-            ),
-            fetch(
-              `http://localhost:8080/tech-architecture/generate-architecture-diagram/${currentProject._id}`,
-              {
-                credentials: "include",
-                headers: { Accept: "application/json" },
-              }
-            ),
-          ]);
-
-          if (!techStackResponse.ok || !architectureResponse.ok) {
-            throw new Error("Failed to fetch data");
+      try {
+        const response = await fetch(
+          `http://localhost:8080/tech-architecture/generate-tech-stack/${currentProject._id}`,
+          {
+            credentials: "include",
+            headers: { Accept: "application/json" },
           }
+        );
 
-          const [techStackData, architectureData] = await Promise.all([
-            techStackResponse.json(),
-            architectureResponse.json(),
-          ]);
-
-          console.log("Tech Stack Data:", techStackData);
-          console.log("Architecture Data:", architectureData);
-
-          // Validate response structure
-          if (
-            techStackData.techStack &&
-            architectureData.architectureDiagram?.diagramData?.nodes && // Updated check
-            Array.isArray(techStackData.techStack.frontend)
-          ) {
-            if (isMounted) {
-              setData({
-                techStack: techStackData.techStack,
-                architecture: architectureData // Store the whole architecture data
-              });
-              setIsLoading(false);
-              return;
-            }
-          } else {
-            console.warn("Invalid data received, retrying...");
-          }
-        } catch (error) {
-          console.error("Error fetching data:", error);
-          if (isMounted) {
-            setError(
-              error instanceof Error ? error.message : "Error fetching data"
-            );
-          }
+        if (!response.ok) {
+          throw new Error("Failed to fetch tech stack");
         }
-        retries--;
-        await new Promise((resolve) => setTimeout(resolve, 2000)); // Delay before retry
-      }
 
-      if (isMounted) {
-        setIsLoading(false);
-        setError("Failed to fetch valid data after multiple attempts.");
+        const data: TechStackResponse = await response.json();
+
+        if (isMounted && data.techStack) {
+          setTechStack(data.techStack);
+        }
+      } catch (error) {
+        if (isMounted) {
+          setError(
+            error instanceof Error ? error.message : "Error fetching tech stack"
+          );
+        }
+      } finally {
+        if (isMounted) {
+          setIsLoading(false);
+        }
       }
     };
 
-    fetchData();
+    fetchTechStack();
     return () => {
       isMounted = false;
     };
   }, [currentProject?._id]);
-
-  const mermaidDiagram = data.architecture?.architectureDiagram?.diagramData
-  ? convertJsonToMermaid(data.architecture.architectureDiagram.diagramData)
-  : "";
 
   const categories = [
     { id: 1, key: "frontend", title: "Frontend" },
@@ -195,8 +146,7 @@ const AITechStack: React.FC = () => {
   }
 
   const isTechStackEmpty =
-    !data.techStack ||
-    Object.values(data.techStack).every((arr) => arr.length === 0);
+    !techStack || Object.values(techStack).every((arr) => arr.length === 0);
 
   if (isTechStackEmpty) {
     return (
@@ -213,21 +163,7 @@ const AITechStack: React.FC = () => {
             onClick={() => router.push("/requirements")}
             className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-200 flex items-center gap-2 mx-auto"
           >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              className="h-5 w-5"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M10 19l-7-7m0 0l7-7m-7 7h18"
-              />
-            </svg>
-            Go to Requirements Analysis
+            <span>Go to Requirements Analysis</span>
           </button>
         </div>
       </div>
@@ -240,18 +176,6 @@ const AITechStack: React.FC = () => {
         Recommended Tech Stack
       </h2>
 
-      <div className="bg-white rounded-lg shadow-md p-6 mb-12">
-        <h3 className="text-xl font-semibold text-gray-700 mb-4">
-          System Architecture
-        </h3>
-        <div className="w-full h-full bg-gray-50 rounded-lg overflow-hidden">
-          <MermaidDiagram
-            chart={mermaidDiagram || "graph LR\nA[Loading...]"}
-            className="flex items-center justify-center"
-          />
-        </div>
-      </div>
-
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         {categories.map((category) => (
           <div key={category.id} className="bg-white rounded-lg shadow-md p-6">
@@ -259,11 +183,10 @@ const AITechStack: React.FC = () => {
               {category.title}
             </h3>
             <div className="space-y-4">
-              {data.techStack?.[category.key as keyof TechStackData]?.map(
+              {techStack?.[category.key as keyof TechStackData]?.map(
                 (tech, index) => (
                   <div key={index} className="bg-gray-50 rounded-lg p-4">
                     <div className="flex items-center gap-2 mb-2">
-                      {/* You can add tech icons here using a library like react-icons */}
                       <span className="font-medium text-gray-800">
                         {tech.name}
                       </span>

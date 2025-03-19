@@ -260,7 +260,7 @@ export default function RequirementAnalyzer() {
 
     try {
       const response = await fetch(
-        "http://localhost:8080/requirment-analysis",
+        `http://localhost:8080/requirment-analysis/${currentProject._id}`,
         {
           method: "POST",
           body: formData,
