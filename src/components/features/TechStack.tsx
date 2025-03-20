@@ -59,7 +59,8 @@ const AITechStack: React.FC = () => {
   const router = useRouter();
   const { currentProject } = useProject();
   const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string>("");
+  const [techStackError, setTechStackError] = useState<string>("");
+  const [architectureError, setArchitectureError] = useState<string>("");
   const [data, setData] = useState<{
     techStack: TechStackData | null;
     architecture: ArchitectureResponse | null;
@@ -69,10 +70,49 @@ const AITechStack: React.FC = () => {
   });
 
   useEffect(() => {
+    console.log("[TechStack] Architecture data:", data.architecture);
+  }, [data.architecture]); // Debug log to check what data we have
+
+  // Tech Stack Fetch
+  useEffect(() => {
+    const fetchTechStack = async () => {
+      if (!currentProject?._id) return;
+
+      try {
+        const response = await fetch(
+          `http://localhost:8080/tech-architecture/generate-tech-stack/${currentProject._id}`,
+          {
+            credentials: "include",
+            headers: { Accept: "application/json" },
+          }
+        );
+
+        if (!response.ok) {
+          throw new Error("Failed to fetch tech stack");
+        }
+
+        const techStackData = await response.json();
+        setData((prev) => ({
+          ...prev,
+          techStack: techStackData.techStack,
+        }));
+      } catch (error) {
+        console.error("[TechStack] Tech stack fetch error:", error);
+        setTechStackError(
+          error instanceof Error ? error.message : "Failed to fetch tech stack"
+        );
+      }
+    };
+
+    fetchTechStack();
+  }, [currentProject?._id]);
+
+  // Architecture Diagram Fetch
+  useEffect(() => {
     console.log("[TechStack] Starting data fetch");
     let isMounted = true;
 
-    const fetchData = async () => {
+    const fetchArchitecture = async () => {
       if (!currentProject?._id) {
         console.log("[TechStack] No current project ID");
         setIsLoading(false);
@@ -120,8 +160,10 @@ const AITechStack: React.FC = () => {
       } catch (error) {
         console.error("[TechStack] Error:", error);
         if (isMounted) {
-          setError(
-            error instanceof Error ? error.message : "Error fetching data"
+          setArchitectureError(
+            error instanceof Error
+              ? error.message
+              : "Error fetching architecture"
           );
         }
       } finally {
@@ -131,44 +173,10 @@ const AITechStack: React.FC = () => {
       }
     };
 
-    fetchData();
+    fetchArchitecture();
     return () => {
       isMounted = false;
     };
-  }, [currentProject?._id]);
-
-  useEffect(() => {
-    console.log("[TechStack] Architecture data:", data.architecture);
-  }, [data.architecture]); // Debug log to check what data we have
-
-  useEffect(() => {
-    const fetchTechStack = async () => {
-      if (!currentProject?._id) return;
-
-      try {
-        const response = await fetch(
-          `http://localhost:8080/tech-architecture/generate-tech-stack/${currentProject._id}`,
-          {
-            credentials: "include",
-            headers: { Accept: "application/json" },
-          }
-        );
-
-        if (!response.ok) {
-          throw new Error("Failed to fetch tech stack");
-        }
-
-        const techStackData = await response.json();
-        setData((prev) => ({
-          ...prev,
-          techStack: techStackData.techStack,
-        }));
-      } catch (error) {
-        console.error("[TechStack] Tech stack fetch error:", error);
-      }
-    };
-
-    fetchTechStack();
   }, [currentProject?._id]);
 
   const mermaidDiagram = useMemo(() => {
@@ -248,99 +256,103 @@ const AITechStack: React.FC = () => {
     );
   }
 
-  if (error) {
-    return (
-      <div className="max-w-7xl mx-auto p-8">
-        <div className="text-center py-16 bg-white rounded-lg shadow-md">
-          <h2 className="text-2xl font-bold text-red-800 mb-4">
-            Error Loading Tech Stack
-          </h2>
-          <p className="text-gray-600 mb-8">{error}</p>
-        </div>
-      </div>
-    );
-  }
-
-  if (!data.architecture?.architectureDiagram?.diagramData) {
-    return (
-      <div className="max-w-7xl mx-auto p-8">
-        <div className="text-center py-16 bg-white rounded-lg shadow-md">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading architecture diagram...</p>
-        </div>
-      </div>
-    );
-  }
-
   return (
     <div className="max-w-7xl mx-auto p-8">
       <h2 className="text-3xl font-bold text-gray-800 text-center mb-8">
         Recommended Tech Stack
       </h2>
 
-      <div className="bg-white rounded-lg shadow-md p-6 mb-12">
-        <h3 className="text-xl font-semibold text-gray-700 mb-4">
-          System Architecture
-        </h3>
-        <div className="w-full h-full bg-gray-50 rounded-lg overflow-hidden">
-          <MermaidDiagram
-            chart={mermaidDiagram || "graph LR\nA[Loading...]"}
-            className="flex items-center justify-center"
-          />
+      {techStackError ? (
+        <div className="bg-white rounded-lg shadow-md p-6 mb-12">
+          <h3 className="text-xl font-semibold text-red-700 mb-4">
+            Tech Stack Error
+          </h3>
+          <p className="text-gray-600">{techStackError}</p>
         </div>
-      </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-12">
+          {categories.map((category) => (
+            <div
+              key={category.id}
+              className={`bg-white rounded-lg shadow-md p-6 ${
+                !data.techStack?.[category.key as keyof TechStackData]?.length
+                  ? "opacity-50"
+                  : ""
+              }`}
+            >
+              <div className="flex items-center gap-3 pb-2 mb-4 border-b-2 border-gray-100">
+                <span
+                  className="text-2xl"
+                  role="img"
+                  aria-label={category.title}
+                >
+                  {category.icon}
+                </span>
+                <h3 className="text-xl font-semibold text-gray-700">
+                  {category.title}
+                </h3>
+              </div>
 
-      <h2 className="text-3xl font-bold text-gray-800 text-center mb-8">
-        Recommended Tech Stack
-      </h2>
-
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {categories.map((category) => (
-          <div
-            key={category.id}
-            className={`bg-white rounded-lg shadow-md p-6 ${
-              !data.techStack?.[category.key as keyof TechStackData]?.length
-                ? "opacity-50"
-                : ""
-            }`}
-          >
-            <div className="flex items-center gap-3 pb-2 mb-4 border-b-2 border-gray-100">
-              <span className="text-2xl" role="img" aria-label={category.title}>
-                {category.icon}
-              </span>
-              <h3 className="text-xl font-semibold text-gray-700">
-                {category.title}
-              </h3>
-            </div>
-
-            <div className="space-y-4">
-              {data.techStack?.[category.key as keyof TechStackData]?.map(
-                (tech, index) => (
-                  <div
-                    key={index}
-                    className={`${category.bgColor} rounded-lg p-4 border ${category.borderColor} transition-all duration-200 hover:shadow-md`}
-                  >
-                    <div className="flex items-center gap-2 mb-2">
-                      <span className="font-medium text-gray-800">
-                        {tech.name}
-                      </span>
+              <div className="space-y-4">
+                {data.techStack?.[category.key as keyof TechStackData]?.map(
+                  (tech, index) => (
+                    <div
+                      key={index}
+                      className={`${category.bgColor} rounded-lg p-4 border ${category.borderColor} transition-all duration-200 hover:shadow-md`}
+                    >
+                      <div className="flex items-center gap-2 mb-2">
+                        <span className="font-medium text-gray-800">
+                          {tech.name}
+                        </span>
+                      </div>
+                      <p className="text-sm text-gray-600 leading-relaxed">
+                        {tech.description}
+                      </p>
                     </div>
-                    <p className="text-sm text-gray-600 leading-relaxed">
-                      {tech.description}
-                    </p>
-                  </div>
-                )
+                  )
+                )}
+              </div>
+
+              {!data.techStack?.[category.key as keyof TechStackData]
+                ?.length && (
+                <div className="text-center text-gray-500 py-4">
+                  No {category.title.toLowerCase()} technologies recommended
+                </div>
               )}
             </div>
+          ))}
+        </div>
+      )}
 
-            {!data.techStack?.[category.key as keyof TechStackData]?.length && (
-              <div className="text-center text-gray-500 py-4">
-                No {category.title.toLowerCase()} technologies recommended
-              </div>
-            )}
-          </div>
-        ))}
-      </div>
+      {/* Architecture Section */}
+      <h2 className="text-3xl font-bold text-gray-800 text-center mb-8 mt-12">
+        System Architecture
+      </h2>
+
+      {architectureError ? (
+        <div className="bg-white rounded-lg shadow-md p-6">
+          <h3 className="text-xl font-semibold text-red-700 mb-4">
+            Architecture Diagram Error
+          </h3>
+          <p className="text-gray-600">{architectureError}</p>
+        </div>
+      ) : (
+        <div className="bg-white rounded-lg shadow-md p-6">
+          {data.architecture?.architectureDiagram?.diagramData ? (
+            <div className="w-full h-full bg-gray-50 rounded-lg overflow-hidden">
+              <MermaidDiagram
+                chart={mermaidDiagram || "graph LR\nA[Loading...]"}
+                className="flex items-center justify-center"
+              />
+            </div>
+          ) : (
+            <div className="text-center py-8">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+              <p className="text-gray-600">Loading architecture diagram...</p>
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 };
