@@ -44,6 +44,67 @@ interface LoggedUserData {
   role: string;
 }
 
+interface TechStackOptions {
+  frontend: string[];
+  backend: string[];
+  database: string[];
+}
+
+const webTechStacks: TechStackOptions = {
+  frontend: [
+    "React.js",
+    "Next.js",
+    "Angular",
+    "Vue.js",
+    "Svelte",
+    "TypeScript",
+  ],
+  backend: [
+    "Node.js",
+    "Python/Django",
+    "Java/Spring",
+    ".NET Core",
+    "PHP/Laravel",
+    "Ruby on Rails",
+  ],
+  database: [
+    "PostgreSQL",
+    "MongoDB",
+    "MySQL",
+    "Redis",
+    "Oracle",
+    "Microsoft SQL",
+  ],
+};
+
+const mobileTechStacks: TechStackOptions = {
+  frontend: [
+    "React Native",
+    "Flutter",
+    "Kotlin",
+    "Swift",
+    "Ionic",
+    "Native Android",
+    "Native iOS",
+  ],
+  backend: [
+    "Firebase",
+    "Node.js",
+    "Python/Flask",
+    "Java/Spring Boot",
+    "GraphQL",
+    ".NET Core",
+  ],
+  database: [
+    "SQLite",
+    "Realm",
+    "Firebase Realtime DB",
+    "MongoDB Mobile",
+    "PostgreSQL",
+    "MySQL",
+  ],
+};
+
 export default function RequirementAnalyzer() {
   const { currentProject } = useProject();
 
@@ -535,6 +596,119 @@ export default function RequirementAnalyzer() {
     );
   };
 
+  const getAvailableTechStacks = (
+    category: keyof TechStackOptions
+  ): string[] => {
+    const techStacks = new Set<string>();
+
+    if (platforms.web) {
+      webTechStacks[category].forEach((tech) => techStacks.add(tech));
+    }
+    if (platforms.mobile) {
+      mobileTechStacks[category].forEach((tech) => techStacks.add(tech));
+    }
+
+    // If no platform selected, show web tech stacks as default
+    if (!platforms.web && !platforms.mobile) {
+      webTechStacks[category].forEach((tech) => techStacks.add(tech));
+    }
+
+    return Array.from(techStacks);
+  };
+
+  const renderTechStackSection = () => (
+    <div className="bg-white p-6 rounded-lg border border-gray-200">
+      <h3 className="text-lg font-semibold text-gray-700 mb-4 flex items-center">
+        <svg
+          className="w-5 h-5 mr-2 text-blue-500"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth="2"
+            d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"
+          />
+        </svg>
+        Tech Stack Preferences
+      </h3>
+
+      <div className="space-y-6">
+        {[
+          { category: "frontend", label: "Frontend" },
+          { category: "backend", label: "Backend" },
+          { category: "database", label: "Database" },
+        ].map(({ category, label }) => (
+          <div key={category} className="space-y-2">
+            <p className="text-sm font-medium text-gray-600">{label}</p>
+            <div className="flex flex-wrap gap-2">
+              {[
+                ...getAvailableTechStacks(category as keyof TechStackOptions),
+                "Other",
+              ].map((tech) => (
+                <label
+                  key={tech}
+                  className={`inline-flex items-center px-3 py-1.5 rounded-full border transition-colors ${
+                    tech === "Other"
+                      ? showCustomInput[
+                          category as keyof typeof showCustomInput
+                        ]
+                        ? "bg-blue-100 border-blue-300"
+                        : "border-gray-300 hover:border-blue-300"
+                      : techStack[
+                          category as keyof TechStackPreference
+                        ].includes(tech)
+                      ? "bg-blue-100 border-blue-300"
+                      : "border-gray-300 hover:border-blue-300"
+                  }`}
+                >
+                  <input
+                    type="checkbox"
+                    checked={
+                      tech === "Other"
+                        ? showCustomInput[
+                            category as keyof typeof showCustomInput
+                          ]
+                        : techStack[
+                            category as keyof TechStackPreference
+                          ].includes(tech)
+                    }
+                    onChange={() =>
+                      handleTechStackChange(
+                        category as keyof TechStackPreference,
+                        tech
+                      )
+                    }
+                    className="sr-only"
+                  />
+                  <span className="text-sm text-gray-700">{tech}</span>
+                </label>
+              ))}
+            </div>
+            {showCustomInput[category as keyof typeof showCustomInput] && (
+              <input
+                type="text"
+                value={
+                  customTechStack[category as keyof typeof customTechStack]
+                }
+                onChange={(e) =>
+                  handleCustomTechStackChange(
+                    category as keyof TechStackPreference,
+                    e.target.value
+                  )
+                }
+                placeholder={`Enter custom ${label.toLowerCase()} technology`}
+                className="w-full p-2 text-sm border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              />
+            )}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+
   return (
     <div className="p-6 bg-white shadow-md rounded-lg">
       {!currentProject ? (
@@ -649,109 +823,7 @@ export default function RequirementAnalyzer() {
             </div>
 
             {/* Tech Stack Preferences - Right Column */}
-            <div className="bg-white p-6 rounded-lg border border-gray-200">
-              <h3 className="text-lg font-semibold text-gray-700 mb-4 flex items-center">
-                <svg
-                  className="w-5 h-5 mr-2 text-blue-500"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth="2"
-                    d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"
-                  />
-                </svg>
-                Tech Stack Preferences
-              </h3>
-
-              <div className="space-y-6">
-                {[
-                  {
-                    category: "frontend",
-                    label: "Frontend",
-                    options: ["React", "Angular", "Vue", "Next.js"],
-                  },
-                  {
-                    category: "backend",
-                    label: "Backend",
-                    options: ["Node.js", "Python", "Java", ".NET"],
-                  },
-                  {
-                    category: "database",
-                    label: "Database",
-                    options: ["MongoDB", "PostgreSQL", "MySQL", "Redis"],
-                  },
-                ].map(({ category, label, options }) => (
-                  <div key={category} className="space-y-2">
-                    <p className="text-sm font-medium text-gray-600">{label}</p>
-                    <div className="flex flex-wrap gap-2">
-                      {[...options, "Other"].map((tech) => (
-                        <label
-                          key={tech}
-                          className={`inline-flex items-center px-3 py-1.5 rounded-full border transition-colors ${
-                            tech === "Other"
-                              ? showCustomInput[
-                                  category as keyof typeof showCustomInput
-                                ]
-                                ? "bg-blue-100 border-blue-300"
-                                : "border-gray-300 hover:border-blue-300"
-                              : techStack[
-                                  category as keyof TechStackPreference
-                                ].includes(tech)
-                              ? "bg-blue-100 border-blue-300"
-                              : "border-gray-300 hover:border-blue-300"
-                          }`}
-                        >
-                          <input
-                            type="checkbox"
-                            checked={
-                              tech === "Other"
-                                ? showCustomInput[
-                                    category as keyof typeof showCustomInput
-                                  ]
-                                : techStack[
-                                    category as keyof TechStackPreference
-                                  ].includes(tech)
-                            }
-                            onChange={() =>
-                              handleTechStackChange(
-                                category as keyof TechStackPreference,
-                                tech
-                              )
-                            }
-                            className="sr-only"
-                          />
-                          <span className="text-sm text-gray-700">{tech}</span>
-                        </label>
-                      ))}
-                    </div>
-                    {showCustomInput[
-                      category as keyof typeof showCustomInput
-                    ] && (
-                      <input
-                        type="text"
-                        value={
-                          customTechStack[
-                            category as keyof typeof customTechStack
-                          ]
-                        }
-                        onChange={(e) =>
-                          handleCustomTechStackChange(
-                            category as keyof TechStackPreference,
-                            e.target.value
-                          )
-                        }
-                        placeholder={`Enter ${label.toLowerCase()} technology`}
-                        className="w-full p-2 text-sm border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                      />
-                    )}
-                  </div>
-                ))}
-              </div>
-            </div>
+            {renderTechStackSection()}
           </div>
           {/* Process Button */}
           <button
