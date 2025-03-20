@@ -269,7 +269,6 @@ export default function EffortAndCost() {
             <li>Effort Estimation - Feature-wise effort breakdown</li>
             <li>Cost Estimation - Detailed cost calculations</li>
             <li>Resource Allocation - Team member assignments</li>
-            <li>Timeline - Project schedule and milestones</li>
           </ul>
         </div>
       </div>

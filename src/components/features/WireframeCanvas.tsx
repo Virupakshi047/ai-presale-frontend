@@ -1,354 +1,180 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
+import { useProject } from "@/context/ProjectContext";
+import {
+  ChevronLeft,
+  ChevronRight,
+  Maximize2,
+  Minimize2,
+  X,
+} from "lucide-react";
 
-interface Position {
-    x: number;
-    y: number;
+interface WireframeResponse {
+  message: string;
+  wireframe: {
+    _id: string;
+    image_link: string[];
+    __v: number;
+  };
 }
-
-interface Element {
-    type: string;
-    label: string;
-    position: Position;
-}
-
-interface Page {
-    name: string;
-    elements: Element[];
-}
-
-interface WireframeData {
-    pages: Page[];
-}
-
-const sampleWireframe: WireframeData = {
-    pages: [
-        {
-            "name": "Requirement Extraction",
-            "elements": [
-                {
-                    "type": "header",
-                    "label": "Requirement Extraction",
-                    "position": {
-                        "x": 50,
-                        "y": 50
-                    }
-                },
-                {
-                    "type": "textbox",
-                    "label": "Text Input",
-                    "position": {
-                        "x": 50,
-                        "y": 100
-                    }
-                },
-                {
-                    "type": "button",
-                    "label": "Upload Document",
-                    "position": {
-                        "x": 50,
-                        "y": 150
-                    }
-                },
-                {
-                    "type": "header",
-                    "label": "Feature Breakdown",
-                    "position": {
-                        "x": 50,
-                        "y": 200
-                    }
-                }
-            ]
-        },
-        {
-            "name": "Requirement Categorization",
-            "elements": [
-                {
-                    "type": "header",
-                    "label": "Requirement Categorization",
-                    "position": {
-                        "x": 50,
-                        "y": 50
-                    }
-                },
-                {
-                    "type": "textbox",
-                    "label": "User Persona & Workflow Mapping",
-                    "position": {
-                        "x": 50,
-                        "y": 100
-                    }
-                },
-                {
-                    "type": "textbox",
-                    "label": "Integration Analysis",
-                    "position": {
-                        "x": 50,
-                        "y": 150
-                    }
-                }
-            ]
-        },
-        {
-            "name": "Architecture Suggestion",
-            "elements": [
-                {
-                    "type": "header",
-                    "label": "Architecture Suggestion",
-                    "position": {
-                        "x": 50,
-                        "y": 50
-                    }
-                },
-                {
-                    "type": "textbox",
-                    "label": "Third-Party API Integration Identification",
-                    "position": {
-                        "x": 50,
-                        "y": 100
-                    }
-                },
-                {
-                    "type": "textbox",
-                    "label": "Architecture Visualization",
-                    "position": {
-                        "x": 50,
-                        "y": 150
-                    }
-                }
-            ]
-        },
-        {
-            "name": "Effort Estimation",
-            "elements": [
-                {
-                    "type": "header",
-                    "label": "Effort Estimation",
-                    "position": {
-                        "x": 50,
-                        "y": 50
-                    }
-                },
-                {
-                    "type": "textbox",
-                    "label": "Timeline Prediction",
-                    "position": {
-                        "x": 50,
-                        "y": 100
-                    }
-                },
-                {
-                    "type": "textbox",
-                    "label": "Cost Estimation",
-                    "position": {
-                        "x": 50,
-                        "y": 150
-                    }
-                }
-            ]
-        },
-        {
-            "name": "Wireframe Generation",
-            "elements": [
-                {
-                    "type": "header",
-                    "label": "Wireframe Generation",
-                    "position": {
-                        "x": 50,
-                        "y": 50
-                    }
-                },
-                {
-                    "type": "textbox",
-                    "label": "UI Visualization",
-                    "position": {
-                        "x": 50,
-                        "y": 100
-                    }
-                }
-            ]
-        },
-        {
-            "name": "Collaborative Editing",
-            "elements": [
-                {
-                    "type": "header",
-                    "label": "Collaborative Editing",
-                    "position": {
-                        "x": 50,
-                        "y": 50
-                    }
-                },
-                {
-                    "type": "textbox",
-                    "label": "Collaborative Editing",
-                    "position": {
-                        "x": 50,
-                        "y": 100
-                    }
-                },
-                {
-                    "type": "textbox",
-                    "label": "Past Proposals & Revisions Display",
-                    "position": {
-                        "x": 50,
-                        "y": 150
-                    }
-                },
-                {
-                    "type": "textbox",
-                    "label": "Proposal Change Tracking",
-                    "position": {
-                        "x": 50,
-                        "y": 200
-                    }
-                },
-                {
-                    "type": "textbox",
-                    "label": "Notification System",
-                    "position": {
-                        "x": 50,
-                        "y": 250
-                    }
-                }
-            ]
-        }
-    ],
-};
 
 export default function WireframeCanvas() {
-    const canvasRef = useRef<any>(null);
-    const [fabricModule, setFabricModule] = useState<any>(null);
-    const [wireframeData] = useState<WireframeData>(sampleWireframe);
-    const [currentPage, setCurrentPage] = useState<number>(0);
+  const { currentProject } = useProject();
+  const [images, setImages] = useState<string[]>([]);
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [isFullscreen, setIsFullscreen] = useState(false);
 
-    useEffect(() => {
-        if (typeof window === "undefined") return;
+  useEffect(() => {
+    const fetchWireframes = async () => {
+      if (!currentProject?._id) return;
 
-        import("fabric").then((module) => {
-            setFabricModule(module.default || module);
-        }).catch((err) => {
-            console.error("Error loading Fabric.js:", err);
-        });
-    }, []);
+      try {
+        const response = await fetch(
+          `http://localhost:8080/wireframe/${currentProject._id}`,
+          {
+            credentials: "include",
+          }
+        );
 
-    useEffect(() => {
-        if (!fabricModule) return;
-
-        if (canvasRef.current) {
-            canvasRef.current.dispose();
+        if (!response.ok) {
+          throw new Error("Failed to fetch wireframes");
         }
 
-        const canvas = new fabricModule.Canvas("wireframeCanvas");
-        canvasRef.current = canvas;
-
-        renderPage(canvas, wireframeData.pages[currentPage]);
-
-        return () => {
-            if (canvasRef.current) {
-                canvasRef.current.dispose();
-                canvasRef.current = null;
-            }
-        };
-    }, [fabricModule, wireframeData, currentPage]); // Re-render when page changes
-
-    const renderPage = (canvas: any, page: Page) => {
-        if (!fabricModule) return;
-
-        canvas.clear();
-
-        page.elements.forEach((element) => {
-            let fabricElement;
-
-            if (element.type === "button") {
-                const buttonRect = new fabricModule.Rect({
-                    width: 100,
-                    height: 30,
-                    fill: "lightblue",
-                    rx: 5,
-                    ry: 5,
-                });
-
-                const buttonText = new fabricModule.Text(element.label, {
-                    fontSize: 14,
-                    fill: "black",
-                    originX: "center",
-                    originY: "center",
-                });
-
-                fabricElement = new fabricModule.Group([buttonRect, buttonText], {
-                    left: element.position.x,
-                    top: element.position.y,
-                    selectable: true, // Allow selection & movement
-                    hasControls: true, // Enable resizing & rotation
-                });
-
-                buttonText.set({ left: 50, top: 15 }); // Center text inside button
-            }
-
-
-            if (element.type === "textbox") {
-                fabricElement = new fabricModule.Textbox(element.label, {
-                    left: element.position.x,
-                    top: element.position.y,
-                    fontSize: 16,
-                    fill: "black",
-                    editable: false,
-                });
-            } else if (element.type === "button") {
-                const buttonRect = new fabricModule.Rect({
-                    width: 100,
-                    height: 30,
-                    fill: "lightblue",
-                    rx: 5,
-                    ry: 5,
-                });
-
-                const buttonText = new fabricModule.Text(element.label, {
-                    fontSize: 14,
-                    fill: "black",
-                    originX: "center",
-                    originY: "center",
-                });
-
-                fabricElement = new fabricModule.Group([buttonRect, buttonText], {
-                    left: element.position.x,
-                    top: element.position.y,
-                    selectable: false,
-                });
-            }
-
-            if (fabricElement) {
-                canvas.add(fabricElement);
-            }
-        });
-
-        canvas.renderAll();
+        const data: WireframeResponse = await response.json();
+        setImages(data.wireframe.image_link);
+      } catch (err) {
+        setError(
+          err instanceof Error ? err.message : "Failed to load wireframes"
+        );
+      } finally {
+        setIsLoading(false);
+      }
     };
 
-    return (
-        <div>
-            <h2 className="text-xl font-semibold mb-4">{wireframeData.pages[currentPage].name}</h2>
-            <canvas id="wireframeCanvas" width={500} height={400} className="border rounded-lg" />
+    fetchWireframes();
+  }, [currentProject?._id]);
 
-            {/* Page Navigation */}
-            <div className="mt-4 flex justify-between">
-                <button
-                    onClick={() => setCurrentPage((prev) => Math.max(0, prev - 1))}
-                    disabled={currentPage === 0}
-                    className="px-4 py-2 bg-gray-300 rounded disabled:opacity-50"
-                >
-                    Previous
-                </button>
-                <button
-                    onClick={() => setCurrentPage((prev) => Math.min(wireframeData.pages.length - 1, prev + 1))}
-                    disabled={currentPage === wireframeData.pages.length - 1}
-                    className="px-4 py-2 bg-gray-300 rounded disabled:opacity-50"
-                >
-                    Next
-                </button>
-            </div>
-        </div>
+  const handlePrevious = () => {
+    setCurrentIndex((prev) => (prev > 0 ? prev - 1 : prev));
+  };
+
+  const handleNext = () => {
+    setCurrentIndex((prev) => (prev < images.length - 1 ? prev + 1 : prev));
+  };
+
+  const toggleFullscreen = () => {
+    setIsFullscreen(!isFullscreen);
+  };
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-96">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
+      </div>
     );
+  }
+
+  if (error) {
+    return (
+      <div className="text-center text-red-500 p-4">
+        <p>{error}</p>
+      </div>
+    );
+  }
+
+  if (!images.length) {
+    return (
+      <div className="text-center text-gray-500 p-4">
+        <p>No wireframes available</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="relative">
+      <h2 className="text-2xl font-bold text-gray-800 p-5">
+        Generated Wireframes
+      </h2>
+      {/* Main Container */}
+      <div
+        className={`relative ${
+          isFullscreen
+            ? "fixed inset-0 z-50 bg-black"
+            : "rounded-lg overflow-hidden"
+        }`}
+      >
+        {/* Image Container */}
+        <div
+          className={`relative ${
+            isFullscreen ? "h-screen" : "h-[600px]"
+          } bg-gray-900`}
+        >
+          <img
+            src={images[currentIndex]}
+            alt={`Wireframe ${currentIndex + 1}`}
+            className={`w-full h-full object-contain ${
+              isFullscreen ? "p-4" : ""
+            }`}
+          />
+
+          {/* Navigation Controls */}
+          <div
+            className={`absolute inset-0 flex items-center justify-between p-4 ${
+              isFullscreen ? "px-8" : ""
+            }`}
+          >
+            <button
+              onClick={handlePrevious}
+              disabled={currentIndex === 0}
+              className="p-2 rounded-full bg-black/50 text-white hover:bg-black/70 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+            >
+              <ChevronLeft size={24} />
+            </button>
+            <button
+              onClick={handleNext}
+              disabled={currentIndex === images.length - 1}
+              className="p-2 rounded-full bg-black/50 text-white hover:bg-black/70 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+            >
+              <ChevronRight size={24} />
+            </button>
+          </div>
+
+          {/* Fullscreen Controls */}
+          <div
+            className={`absolute ${
+              isFullscreen ? "top-4 right-4" : "top-2 right-2"
+            }`}
+          >
+            <button
+              onClick={toggleFullscreen}
+              className="p-2 rounded-full bg-black/50 text-white hover:bg-black/70 transition-all"
+            >
+              {isFullscreen ? <Minimize2 size={20} /> : <Maximize2 size={20} />}
+            </button>
+          </div>
+
+          {/* Page Indicator */}
+          <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 bg-black/50 text-white px-3 py-1 rounded-full text-sm">
+            {currentIndex + 1} / {images.length}
+          </div>
+        </div>
+      </div>
+
+      {/* Thumbnail Navigation */}
+      <div className="mt-4 flex justify-center gap-2">
+        {images.map((_, index) => (
+          <button
+            key={index}
+            onClick={() => setCurrentIndex(index)}
+            className={`w-2 h-2 rounded-full transition-all ${
+              currentIndex === index ? "bg-blue-500 w-4" : "bg-gray-300"
+            }`}
+          />
+        ))}
+      </div>
+    </div>
+  );
 }
