@@ -179,6 +179,33 @@ const AITechStack: React.FC = () => {
     };
   }, [currentProject?._id]);
 
+  const handleRetryArchitecture = async () => {
+    setArchitectureError("");
+    try {
+      const response = await fetch(
+        `http://localhost:8080/tech-architecture/generate-architecture-diagram/${currentProject?._id}`,
+        {
+          credentials: "include",
+          headers: { Accept: "application/json" },
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error(`Architecture fetch failed: ${response.status}`);
+      }
+
+      const architectureData = await response.json();
+      setData((prev) => ({
+        ...prev,
+        architecture: architectureData,
+      }));
+    } catch (error) {
+      setArchitectureError(
+        error instanceof Error ? error.message : "Error fetching architecture"
+      );
+    }
+  };
+
   const mermaidDiagram = useMemo(() => {
     if (!data.architecture?.architectureDiagram?.diagramData) {
       console.log("[TechStack] No diagram data available");
@@ -331,10 +358,14 @@ const AITechStack: React.FC = () => {
 
       {architectureError ? (
         <div className="bg-white rounded-lg shadow-md p-6">
-          <h3 className="text-xl font-semibold text-red-700 mb-4">
-            Architecture Diagram Error
-          </h3>
-          <p className="text-gray-600">{architectureError}</p>
+          <div className="text-center">
+            <button
+              onClick={handleRetryArchitecture}
+              className="px-4 py-2 bg-green-500 hover:bg-green-600 text-white rounded-md transition-colors"
+            >
+              Get Diagram
+            </button>
+          </div>
         </div>
       ) : (
         <div className="bg-white rounded-lg shadow-md p-6">
