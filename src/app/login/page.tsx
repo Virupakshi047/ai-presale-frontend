@@ -68,7 +68,7 @@ export default function LoginPage() {
       localStorage.setItem("userData", JSON.stringify(userData));
 
       // Check if user is head and redirect accordingly
-      if (data.user.role === "head") {
+      if (data.user.role === "head" || data.user.role === "junior") {
         router.push("/dashboard");
       } else {
         setError("Access denied. Only head role is allowed.");

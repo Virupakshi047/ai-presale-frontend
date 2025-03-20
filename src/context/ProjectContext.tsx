@@ -2,13 +2,36 @@
 
 import React, { createContext, useContext, useState, useEffect } from "react";
 
+interface AssignedUser {
+  _id: string;
+  name: string;
+  email: string;
+  role: string;
+  createdAt: string;
+}
+
+interface Version {
+  version: string;
+  updatedBy: string;
+  timestamp: string;
+}
+
 interface Project {
   _id: string;
   name: string;
-  requirements: any[];
+  requirements: string[];
   createdBy: string;
-  assignedUsers: string[];
+  updatedBy: string;
+  assignedUsers: AssignedUser[];
   createdAt: string;
+  updatedAt?: string;
+  __v: number;
+  techStacks?: string;
+  architectureDiagram?: string;
+  userPersona?: string;
+  effortEstimationUrl?: string;
+  wireframe?: string;
+  versions: Version[];
 }
 
 interface ProjectContextType {
@@ -24,7 +47,6 @@ export function ProjectProvider({ children }: { children: React.ReactNode }) {
   const [currentProject, setCurrentProject] = useState<Project | null>(null);
   const [projects, setProjects] = useState<Project[]>([]);
 
-  // Add effect to fetch projects on mount
   useEffect(() => {
     const fetchProjects = async () => {
       try {
@@ -39,7 +61,7 @@ export function ProjectProvider({ children }: { children: React.ReactNode }) {
           throw new Error("Failed to fetch projects");
         }
 
-        const data = await response.json();
+        const data: Project[] = await response.json();
         setProjects(data);
 
         // Set first project as default if no project is selected
@@ -52,7 +74,7 @@ export function ProjectProvider({ children }: { children: React.ReactNode }) {
     };
 
     fetchProjects();
-  }, []);
+  }, [currentProject]);
 
   return (
     <ProjectContext.Provider

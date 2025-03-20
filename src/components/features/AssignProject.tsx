@@ -1,39 +1,161 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { toast } from "react-hot-toast";
+import { useProject } from "@/context/ProjectContext";
 
 interface User {
-  id: string;
+  _id: string;
   name: string;
   role: string;
   email: string;
 }
 
-const dummyUsers: User[] = [
-  { id: "1", name: "John Doe", role: "junior", email: "john@example.com" },
-  { id: "2", name: "Jane Smith", role: "junior", email: "jane@example.com" },
-  { id: "3", name: "Mike Johnson", role: "head", email: "mike@example.com" },
-  { id: "4", name: "Sarah Wilson", role: "junior", email: "sarah@example.com" },
-];
+interface LoggedUserData {
+  name: string;
+  email: string;
+  role: string;
+}
 
 export default function AssignProject() {
   const [showModal, setShowModal] = useState(false);
   const [selectedUser, setSelectedUser] = useState<string>("");
+  const [users, setUsers] = useState<User[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [showAssignedUsers, setShowAssignedUsers] = useState(false);
+  const [loggedUser, setLoggedUser] = useState<LoggedUserData | null>(null);
 
-  const handleAssign = () => {
-    if (!selectedUser) return;
+  const { currentProject, setCurrentProject, projects, setProjects } =
+    useProject();
 
-    // Simulate assignment
-    toast.success(
-      `Project assigned to ${
-        dummyUsers.find((u) => u.id === selectedUser)?.name
-      }`
+  // Fetch available users
+  useEffect(() => {
+    const fetchUsers = async () => {
+      try {
+        const response = await fetch("http://localhost:8080/user", {
+          credentials: "include",
+        });
+        if (!response.ok) throw new Error("Failed to fetch users");
+        const data = await response.json();
+        setUsers(data);
+      } catch (error) {
+        toast.error("Failed to load users");
+        console.error(error);
+      }
+    };
+    fetchUsers();
+    const userData = getLoggedUserData();
+    setLoggedUser(userData);
+  }, []);
+
+  const getLoggedUserData = (): LoggedUserData | null => {
+    const userData = localStorage.getItem("userData");
+    return userData ? JSON.parse(userData) : null;
+  };
+  const filteredUsers = users.filter((user) => {
+    // Don't show already assigned users
+    const isAssigned = currentProject?.assignedUsers.find(
+      (u) => u._id === user._id
     );
-    setShowModal(false);
-    setSelectedUser("");
+
+    // If logged user is not head, don't show head users
+    const shouldHideHead = loggedUser?.role == "head" && user.role === "head";
+
+    return !isAssigned && !shouldHideHead;
+  });
+
+  const handleAssign = async () => {
+    if (!selectedUser || !currentProject) return;
+
+    // Check if current user is head and trying to assign another head
+    const selectedUserData = users.find((u) => u._id === selectedUser);
+    const hasHeadRole = currentProject.assignedUsers.some(
+      (u) => u.role === "head"
+    );
+
+    if (hasHeadRole && selectedUserData?.role === "head") {
+      toast.error("Cannot assign another head to this project");
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const response = await fetch(
+        `http://localhost:8080/project/${currentProject._id}/assign/${selectedUser}`,
+        {
+          method: "POST",
+          credentials: "include",
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
+      );
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || "Failed to assign user");
+      }
+
+      // Update projects list
+      const updatedProjects = projects.map((project) =>
+        project._id === currentProject._id ? data.project : project
+      );
+
+      setProjects(updatedProjects);
+      setCurrentProject(data.project);
+      toast.success("User assigned successfully");
+    } catch (error) {
+      toast.error(
+        error instanceof Error ? error.message : "Failed to assign user"
+      );
+    } finally {
+      setLoading(false);
+      setShowModal(false);
+      setSelectedUser("");
+    }
+  };
+
+  const handleUnassign = async (userId: string) => {
+    if (!currentProject) return;
+
+    // Prevent unassigning if user is head
+    const userToUnassign = currentProject.assignedUsers.find(
+      (u) => u._id === userId
+    );
+    if (userToUnassign?.role === "head") {
+      toast.error("Cannot unassign head from the project");
+      return;
+    }
+
+    try {
+      const response = await fetch(
+        `http://localhost:8080/project/${currentProject._id}/unassign/${userId}`,
+        {
+          method: "POST",
+          credentials: "include",
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error("Failed to unassign user");
+      }
+
+      const data = await response.json();
+
+      // Update projects list
+      const updatedProjects = projects.map((project) =>
+        project._id === currentProject._id ? data.project : project
+      );
+
+      setProjects(updatedProjects);
+      setCurrentProject(data.project);
+      toast.success("User unassigned successfully");
+    } catch (error) {
+      toast.error("Failed to unassign user");
+    }
   };
 
   return (
-    <>
+    <div>
       <button
         onClick={() => setShowModal(true)}
         className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-200 flex items-center gap-2"
@@ -54,65 +176,102 @@ export default function AssignProject() {
           <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
           <path d="M16 3.13a4 4 0 0 1 0 7.75" />
         </svg>
-        Assign Project
+        Manage Users
       </button>
 
       {showModal && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 w-96 max-w-full mx-4">
-            <h3 className="text-xl font-semibold mb-4">Assign Project</h3>
-            <div className="space-y-4">
-              {dummyUsers
-                .filter((user) => user.role !== "head")
-                .map((user) => (
-                  <label
-                    key={user.id}
-                    className={`flex items-start p-3 rounded-lg border-2 cursor-pointer transition-all duration-200 ${
-                      selectedUser === user.id
-                        ? "border-blue-500 bg-blue-50"
-                        : "border-gray-200 hover:border-blue-200"
-                    }`}
-                  >
-                    <input
-                      type="radio"
-                      name="user"
-                      value={user.id}
-                      checked={selectedUser === user.id}
-                      onChange={(e) => setSelectedUser(e.target.value)}
-                      className="mt-1"
-                    />
-                    <div className="ml-3">
-                      <p className="font-medium">{user.name}</p>
-                      <p className="text-sm text-gray-500">{user.email}</p>
-                      <span className="inline-block px-2 py-1 text-xs rounded-full bg-blue-100 text-blue-700 mt-1">
-                        {user.role}
-                      </span>
-                    </div>
-                  </label>
-                ))}
+          <div className="bg-white rounded-lg p-6 w-[600px] max-w-full mx-4">
+            <div className="flex justify-between items-center mb-6">
+              <h3 className="text-xl font-semibold">Management of Users</h3>
+              <button
+                onClick={() => setShowAssignedUsers(!showAssignedUsers)}
+                className="text-sm px-3 py-1 bg-gray-100 rounded-md hover:bg-gray-200"
+              >
+                {showAssignedUsers
+                  ? "Show Available Users"
+                  : "Show Assigned Users"}
+              </button>
             </div>
+
+            <div className="space-y-4 max-h-[60vh] overflow-y-auto">
+              {showAssignedUsers
+                ? // Show assigned users
+                  currentProject?.assignedUsers.map((user) => (
+                    <div
+                      key={user._id}
+                      className="flex items-center justify-between p-3 rounded-lg border-2 border-gray-200"
+                    >
+                      <div>
+                        <p className="font-medium">{user.name}</p>
+                        <p className="text-sm text-gray-500">{user.email}</p>
+                        <span className="inline-block px-2 py-1 text-xs rounded-full bg-blue-100 text-blue-700 mt-1">
+                          {user.role}
+                        </span>
+                      </div>
+                      {user.role !== "head" && (
+                        <button
+                          onClick={() => handleUnassign(user._id)}
+                          className="text-red-600 hover:text-red-800"
+                        >
+                          Unassign
+                        </button>
+                      )}
+                    </div>
+                  ))
+                : // Show available users
+                  filteredUsers.map((user) => (
+                    <label
+                      key={user._id}
+                      className={`flex items-start p-3 rounded-lg border-2 cursor-pointer transition-all duration-200 ${
+                        selectedUser === user._id
+                          ? "border-blue-500 bg-blue-50"
+                          : "border-gray-200 hover:border-blue-200"
+                      }`}
+                    >
+                      <input
+                        type="radio"
+                        name="user"
+                        value={user._id}
+                        checked={selectedUser === user._id}
+                        onChange={(e) => setSelectedUser(e.target.value)}
+                        className="mt-1"
+                      />
+                      <div className="ml-3">
+                        <p className="font-medium">{user.name}</p>
+                        <p className="text-sm text-gray-500">{user.email}</p>
+                        <span className="inline-block px-2 py-1 text-xs rounded-full bg-blue-100 text-blue-700 mt-1">
+                          {user.role}
+                        </span>
+                      </div>
+                    </label>
+                  ))}
+            </div>
+
             <div className="flex justify-end gap-3 mt-6">
               <button
                 onClick={() => setShowModal(false)}
                 className="px-4 py-2 text-gray-600 hover:text-gray-800"
               >
-                Cancel
+                Close
               </button>
-              <button
-                onClick={handleAssign}
-                disabled={!selectedUser}
-                className={`px-4 py-2 rounded-lg ${
-                  selectedUser
-                    ? "bg-blue-600 hover:bg-blue-700 text-white"
-                    : "bg-gray-200 text-gray-500 cursor-not-allowed"
-                }`}
-              >
-                Assign
-              </button>
+              {!showAssignedUsers && (
+                <button
+                  onClick={handleAssign}
+                  disabled={!selectedUser || loading}
+                  className={`px-4 py-2 rounded-lg ${
+                    selectedUser && !loading
+                      ? "bg-blue-600 hover:bg-blue-700 text-white"
+                      : "bg-gray-200 text-gray-500 cursor-not-allowed"
+                  }`}
+                >
+                  {loading ? "Assigning..." : "Assign"}
+                </button>
+              )}
             </div>
           </div>
         </div>
       )}
-    </>
+    </div>
   );
 }
