@@ -3,7 +3,7 @@
 import { useRouter, usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import Hamburger from "../ui/Hamburger";
-import { Plus, X, Trash2 } from "lucide-react";
+import { Menu, X, Plus, Trash2 } from "lucide-react";
 
 interface Project {
   _id: string;
@@ -226,23 +226,24 @@ export default function Sidebar() {
 
   return (
     <>
-      {/* Mobile Overlay */}
-      {isOpen && (
-        <div
-          className="fixed inset-0 bg-black/30 backdrop-blur-sm z-30 lg:hidden"
-          onClick={handleOverlayClick}
-        />
-      )}
-
-      {/* Hamburger Menu - Increased z-index */}
+      {/* Mobile Menu Button - Simplified */}
       <div className="fixed top-4 left-4 z-40 lg:hidden">
-        <Hamburger isOpen={isOpen} onClick={() => setIsOpen(!isOpen)} />
+        <button
+          onClick={() => setIsOpen(!isOpen)}
+          className="p-2 rounded-md bg-white shadow-md hover:bg-gray-50 transition-colors"
+        >
+          {isOpen ? (
+            <X size={20} className="text-gray-600" />
+          ) : (
+            <Menu size={20} className="text-gray-600" />
+          )}
+        </button>
       </div>
 
-      {/* Sidebar - Adjusted z-index and added proper height constraints */}
+      {/* Sidebar - Updated positioning */}
       <div
-        className={`fixed lg:sticky lg:top-0 w-64 bg-gray-100 h-screen overflow-y-auto 
-        p-4 transform transition-transform duration-300 ease-in-out z-50
+        className={`fixed lg:sticky top-0 lg:top-20 w-64 bg-gray-100 h-[calc(100vh-5rem)] overflow-y-auto 
+        p-4 transform transition-transform duration-300 ease-in-out z-30
         ${isOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"}
         shadow-lg lg:shadow-none flex-shrink-0`}
       >
@@ -368,6 +369,14 @@ export default function Sidebar() {
           </ul>
         )}
       </div>
+
+      {/* Mobile Overlay - Updated z-index */}
+      {isOpen && (
+        <div
+          className="fixed inset-0 bg-black/30 backdrop-blur-sm z-20 lg:hidden"
+          onClick={handleOverlayClick}
+        />
+      )}
 
       {/* Only render modal if user has full access */}
       {showModal && hasFullAccess && (

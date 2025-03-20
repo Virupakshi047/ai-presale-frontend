@@ -40,62 +40,80 @@ export default function Navbar() {
   };
 
   return (
-    <nav className="flex items-center justify-between p-4 bg-white shadow-sm sticky top-0 z-40">
-      <div className="flex items-center space-x-4">
-        {/* Logo Placeholder */}
-        <div className="w-12 h-12 bg-gray-200 rounded">
-          {/* Add your logo here */}
+    <nav className="flex items-center justify-between px-6 py-4 bg-white shadow-md sticky top-0 z-40 border-b border-gray-100">
+      <div className="flex items-center space-x-6">
+        {/* Logo and Welcome Message */}
+        <div className="flex items-center">
+          <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg shadow-lg flex items-center justify-center">
+            {/* Replace with your actual logo */}
+            <span className="text-white font-bold text-xl">A</span>
+          </div>
+          <div className="ml-4 hidden md:block">
+            <h1 className="text-gray-700 font-medium">
+              Welcome back,{" "}
+              <span className="text-blue-600 font-semibold">
+                {userData?.name || "User"}
+              </span>
+            </h1>
+            <p className="text-sm text-gray-500">{userData?.role || "Guest"}</p>
+          </div>
         </div>
       </div>
 
       {/* Right Side Navigation */}
       <div className="flex items-center space-x-6">
-        {/* Navigation Links */}
+        {/* Dashboard Link */}
         <Link
           href="/dashboard"
-          className="flex items-center space-x-2 text-gray-600 hover:text-blue-600 transition-colors"
+          className="flex items-center space-x-2 text-gray-600 hover:text-blue-600 transition-all duration-200 px-3 py-2 rounded-md hover:bg-blue-50"
         >
-          <Home size={18} />
-          <span className="hidden md:inline">Dashboard</span>
+          <Home size={18} className="stroke-2" />
+          <span className="hidden md:inline font-medium">Dashboard</span>
         </Link>
-        
-      
-        {/* Notifications */}
-      
+
+        {/* Notifications - You can uncomment and style this part */}
+        {/* <button className="relative p-2 text-gray-600 hover:text-blue-600 transition-all duration-200 hover:bg-blue-50 rounded-md">
+          <Bell size={18} className="stroke-2" />
+          <span className="absolute top-0 right-0 h-2 w-2 bg-red-500 rounded-full"></span>
+        </button> */}
+
         {/* Profile Dropdown */}
         <div className="relative">
           <button
             onClick={() => setShowProfileMenu(!showProfileMenu)}
-            className="flex items-center space-x-2"
+            className="flex items-center space-x-3 focus:outline-none"
           >
-            <div className="w-10 h-10 bg-blue-500 rounded-full flex items-center justify-center hover:bg-blue-600 transition-colors">
-              <User className="text-white" />
+            <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center shadow-md hover:shadow-lg transition-all duration-200 hover:scale-105">
+              <User className="text-white stroke-[2.5]" size={20} />
             </div>
-            <span className="text-gray-700 hidden md:inline">
-              {userData?.name || "User"}
-            </span>
           </button>
 
-          {/* Dropdown Menu */}
+          {/* Enhanced Dropdown Menu */}
           {showProfileMenu && (
-            <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg py-2 border border-gray-100">
+            <div className="absolute right-0 mt-3 w-56 bg-white rounded-xl shadow-xl py-2 border border-gray-100 transform transition-all duration-200">
+              <div className="px-4 py-3 border-b border-gray-100">
+                <p className="text-sm text-gray-500">Signed in as</p>
+                <p className="text-sm font-medium text-gray-900">
+                  {userData?.email}
+                </p>
+              </div>
               <Link
                 href="/profile"
-                className="flex items-center w-full px-4 py-2 text-gray-700 hover:bg-gray-50 cursor-pointer"
+                className="flex items-center w-full px-4 py-2.5 text-gray-700 hover:bg-gray-50 cursor-pointer transition-colors"
               >
-                <User size={16} className="mr-2" />
+                <User size={16} className="mr-3 stroke-2" />
                 Profile
               </Link>
-              <button className="flex items-center w-full px-4 py-2 text-gray-700 hover:bg-gray-50">
-                <Settings size={16} className="mr-2" />
+              <button className="flex items-center w-full px-4 py-2.5 text-gray-700 hover:bg-gray-50 transition-colors">
+                <Settings size={16} className="mr-3 stroke-2" />
                 Settings
               </button>
               <hr className="my-2 border-gray-100" />
               <button
                 onClick={handleLogout}
-                className="flex items-center w-full px-4 py-2 text-red-600 hover:bg-gray-50"
+                className="flex items-center w-full px-4 py-2.5 text-red-600 hover:bg-red-50 transition-colors"
               >
-                <LogOut size={16} className="mr-2" />
+                <LogOut size={16} className="mr-3 stroke-2" />
                 Logout
               </button>
             </div>
