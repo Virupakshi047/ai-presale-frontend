@@ -58,24 +58,10 @@ export default function Navbar() {
           <Home size={18} />
           <span className="hidden md:inline">Dashboard</span>
         </Link>
-        <Link
-          href="/projects"
-          className="text-gray-600 hover:text-blue-600 transition-colors"
-        >
-          Projects
-        </Link>
-        <Link
-          href="/analytics"
-          className="text-gray-600 hover:text-blue-600 transition-colors"
-        >
-          Analytics
-        </Link>
+        
+      
         {/* Notifications */}
-        <button className="p-2 hover:bg-gray-100 rounded-full relative">
-          <Bell size={20} className="text-gray-600 cursor-pointer" />
-          <span className="absolute -top-1 -right-1 w-2 h-2 bg-red-500 rounded-full"></span>
-        </button>
-
+      
         {/* Profile Dropdown */}
         <div className="relative">
           <button
