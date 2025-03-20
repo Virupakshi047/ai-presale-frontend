@@ -38,6 +38,12 @@ interface AnalysisResponse {
   data: AnalysisResult;
 }
 
+interface LoggedUserData {
+  name: string;
+  email: string;
+  role: string;
+}
+
 export default function RequirementAnalyzer() {
   const { currentProject } = useProject();
 
@@ -91,6 +97,7 @@ export default function RequirementAnalyzer() {
     backend: false,
     database: false,
   });
+  const [loggedUser, setLoggedUser] = useState<LoggedUserData | null>(null);
 
   useEffect(() => {
     const controller = new AbortController(); // For cleanup
@@ -159,6 +166,19 @@ export default function RequirementAnalyzer() {
     // Cleanup function
     return () => controller.abort();
   }, [currentProject?._id]); // Only depend on the ID
+
+  useEffect(() => {
+    const userData = getLoggedUserData();
+    setLoggedUser(userData);
+  }, []);
+
+  const getLoggedUserData = (): LoggedUserData | null => {
+    const userData = localStorage.getItem("userData");
+    return userData ? JSON.parse(userData) : null;
+  };
+
+  const hasEditAccess =
+    loggedUser?.role === "head" || loggedUser?.role === "associate";
 
   const handlePlatformChange = (platform: "web" | "mobile") => {
     setPlatforms((prev) => ({
@@ -324,32 +344,36 @@ export default function RequirementAnalyzer() {
   };
 
   const renderModifyButtons = () => (
-    <div className="fixed bottom-6 right-6 flex gap-2">
-      {showInputSection ? (
-        <button
-          onClick={() => {
-            setShowInputSection(false);
-            // Reset input states
-            setSelectedFile(null);
-            setRequirementText("");
-            setError("");
-            setSuccess("");
-          }}
-          className="p-3 bg-gray-600 text-white rounded-full shadow-lg hover:bg-gray-700 transition-colors duration-200"
-          title="Cancel modification"
-        >
-          <XIcon className="w-5 h-5" />
-        </button>
-      ) : (
-        <button
-          onClick={() => setShowInputSection(true)}
-          className="p-3 bg-blue-600 text-white rounded-full shadow-lg hover:bg-blue-700 transition-colors duration-200"
-          title="Modify requirements"
-        >
-          <PencilIcon className="w-5 h-5" />
-        </button>
+    <>
+      {hasEditAccess && (
+        <div className="fixed bottom-6 right-6 flex gap-2">
+          {showInputSection ? (
+            <button
+              onClick={() => {
+                setShowInputSection(false);
+                // Reset input states
+                setSelectedFile(null);
+                setRequirementText("");
+                setError("");
+                setSuccess("");
+              }}
+              className="p-3 bg-gray-600 text-white rounded-full shadow-lg hover:bg-gray-700 transition-colors duration-200"
+              title="Cancel modification"
+            >
+              <XIcon className="w-5 h-5" />
+            </button>
+          ) : (
+            <button
+              onClick={() => setShowInputSection(true)}
+              className="p-3 bg-blue-600 text-white rounded-full shadow-lg hover:bg-blue-700 transition-colors duration-200"
+              title="Modify requirements"
+            >
+              <PencilIcon className="w-5 h-5" />
+            </button>
+          )}
+        </div>
       )}
-    </div>
+    </>
   );
 
   const renderAnalysisResults = () => {
@@ -521,7 +545,7 @@ export default function RequirementAnalyzer() {
         <div className="flex items-center justify-center p-8">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500" />
         </div>
-      ) : showInputSection ? (
+      ) : showInputSection && hasEditAccess ? (
         <>
           <h2 className="text-2xl font-bold mb-4">Input Requirements</h2>
           <div
