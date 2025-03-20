@@ -13,6 +13,11 @@ interface Project {
   assignedUsers: string[];
   createdAt: string;
 }
+interface UserData {
+  name: string;
+  email: string;
+  role: string;
+}
 
 interface CreateProjectResponse {
   _id: string;
@@ -33,6 +38,9 @@ export default function Sidebar() {
   const [isCreating, setIsCreating] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editingName, setEditingName] = useState("");
+
+  // Add this state for user data
+  const [userData, setUserData] = useState<UserData | null>(null);
 
   const router = useRouter();
   const pathname = usePathname();
@@ -65,6 +73,12 @@ export default function Sidebar() {
     fetchProjects();
   }, []);
 
+  // Add this to your existing useEffect or create a new one
+  useEffect(() => {
+    const userDataFromStorage = getLoggedUserData();
+    setUserData(userDataFromStorage);
+  }, []);
+
   // Extract project name from URL or default to first project
   let activeProject = "";
   if (pathname === "/dashboard") {
@@ -81,6 +95,14 @@ export default function Sidebar() {
   const handleOverlayClick = () => {
     setIsOpen(false);
   };
+
+  const getLoggedUserData = (): UserData | null => {
+    const userData = localStorage.getItem("userData");
+    return userData ? JSON.parse(userData) : null;
+  };
+
+  // Add this helper function to check permissions
+  const hasFullAccess = userData?.role === "head";
 
   // Add this function to handle project creation
   const handleCreateProject = async (e: React.FormEvent) => {
@@ -226,13 +248,15 @@ export default function Sidebar() {
       >
         <div className="flex items-center justify-between mb-4 sticky top-0 bg-gray-100 py-2">
           <h2 className="text-xl font-bold">Projects</h2>
-          <button
-            onClick={() => setShowModal(true)}
-            className="p-1.5 rounded-full bg-blue-500 text-white hover:bg-blue-600 transition-colors"
-            title="Create new project"
-          >
-            <Plus size={20} className="cursor-pointer" />
-          </button>
+          {hasFullAccess && (
+            <button
+              onClick={() => setShowModal(true)}
+              className="p-1.5 rounded-full bg-blue-500 text-white hover:bg-blue-600 transition-colors"
+              title="Create new project"
+            >
+              <Plus size={20} className="cursor-pointer" />
+            </button>
+          )}
         </div>
 
         {isLoading ? (
@@ -254,7 +278,7 @@ export default function Sidebar() {
               }`}
               >
                 <div className="flex items-center justify-between">
-                  {editingId === project._id ? (
+                  {editingId === project._id && hasFullAccess ? (
                     <input
                       type="text"
                       value={editingName}
@@ -284,60 +308,60 @@ export default function Sidebar() {
                   ) : (
                     <span
                       onClick={() => {
-                        if (!editingId) {
-                          const encodedProject = encodeURIComponent(
-                            project.name
-                          );
-                          router.push(`/dashboard/${encodedProject}`);
-                          setIsOpen(false);
-                        }
+                        const encodedProject = encodeURIComponent(project.name);
+                        router.push(`/dashboard/${encodedProject}`);
+                        setIsOpen(false);
                       }}
                       onDoubleClick={() => {
-                        setEditingId(project._id);
-                        setEditingName(project.name);
+                        if (hasFullAccess) {
+                          setEditingId(project._id);
+                          setEditingName(project.name);
+                        }
                       }}
-                      className="flex-1 cursor-text"
+                      className="flex-1 cursor-pointer"
                     >
                       {project.name}
                     </span>
                   )}
-                  <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setEditingId(project._id);
-                        setEditingName(project.name);
-                      }}
-                      className="p-1 hover:bg-blue-100 rounded transition-all duration-200"
-                      title="Edit project name"
-                    >
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        width="16"
-                        height="16"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="2"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        className="text-blue-500"
+                  {hasFullAccess && (
+                    <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setEditingId(project._id);
+                          setEditingName(project.name);
+                        }}
+                        className="p-1 hover:bg-blue-100 rounded transition-all duration-200"
+                        title="Edit project name"
                       >
-                        <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
-                        <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
-                      </svg>
-                    </button>
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleDeleteProject(project._id, project.name);
-                      }}
-                      className="p-1 hover:bg-red-100 rounded transition-all duration-200"
-                      title="Delete project"
-                    >
-                      <Trash2 size={16} className="text-red-500" />
-                    </button>
-                  </div>
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          width="16"
+                          height="16"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          className="text-blue-500"
+                        >
+                          <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
+                          <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
+                        </svg>
+                      </button>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleDeleteProject(project._id, project.name);
+                        }}
+                        className="p-1 hover:bg-red-100 rounded transition-all duration-200"
+                        title="Delete project"
+                      >
+                        <Trash2 size={16} className="text-red-500" />
+                      </button>
+                    </div>
+                  )}
                 </div>
               </li>
             ))}
@@ -345,8 +369,8 @@ export default function Sidebar() {
         )}
       </div>
 
-      {/* Create Project Modal */}
-      {showModal && (
+      {/* Only render modal if user has full access */}
+      {showModal && hasFullAccess && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center">
           <div className="bg-white rounded-lg p-6 w-96 relative">
             <button
