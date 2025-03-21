@@ -267,8 +267,7 @@ export default function EffortAndCost() {
           </p>
           <ul className="list-disc ml-6 mt-2 space-y-1">
             <li>Effort Estimation - Feature-wise effort breakdown</li>
-            <li>Cost Estimation - Detailed cost calculations</li>
-            <li>Resource Allocation - Team member assignments</li>
+            <li>Cost Summary - Detailed cost calculations</li>
           </ul>
         </div>
       </div>
