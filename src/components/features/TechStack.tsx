@@ -41,18 +41,24 @@ interface TechStackData {
   others: Technology[];
 }
 
-interface TechStackResponse {
-  message: string;
-  techStack: {
-    _id: string;
-    frontend: Technology[];
-    backend: Technology[];
-    database: Technology[];
-    API_integrations: Technology[];
-    others: Technology[];
-    createdAt: string;
-    __v: number;
-  };
+// interface TechStackResponse {
+//   message: string;
+//   techStack: {
+//     _id: string;
+//     frontend: Technology[];
+//     backend: Technology[];
+//     database: Technology[];
+//     API_integrations: Technology[];
+//     others: Technology[];
+//     createdAt: string;
+//     __v: number;
+//   };
+// }
+
+interface UserData {
+  name: string;
+  email: string;
+  role: string;
 }
 
 const AITechStack: React.FC = () => {
@@ -61,6 +67,7 @@ const AITechStack: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [techStackError, setTechStackError] = useState<string>("");
   const [architectureError, setArchitectureError] = useState<string>("");
+  const [userData, setUserData] = useState<UserData | null>(null);
   const [data, setData] = useState<{
     techStack: TechStackData | null;
     architecture: ArchitectureResponse | null;
@@ -72,6 +79,14 @@ const AITechStack: React.FC = () => {
   useEffect(() => {
     console.log("[TechStack] Architecture data:", data.architecture);
   }, [data.architecture]); // Debug log to check what data we have
+
+  useEffect(() => {
+    const userDataString = localStorage.getItem("userData");
+    if (userDataString) {
+      const parsedUserData = JSON.parse(userDataString);
+      setUserData(parsedUserData);
+    }
+  }, []);
 
   // Tech Stack Fetch
   useEffect(() => {
@@ -395,12 +410,14 @@ const AITechStack: React.FC = () => {
               >
                 Get diagram
               </button>
-              <button
-                onClick={handleRegenerateArchitecture}
-                className="px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-md transition-colors"
-              >
-                Regenerate Diagram
-              </button>
+              {userData?.role && userData.role === "junior" && (
+                <button
+                  onClick={handleRegenerateArchitecture}
+                  className="px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-md transition-colors"
+                >
+                  Regenerate Diagram
+                </button>
+              )}
             </div>
           </div>
         </div>
@@ -415,12 +432,14 @@ const AITechStack: React.FC = () => {
                 />
               </div>
               <div className="flex justify-center">
-                <button
-                  onClick={handleRegenerateArchitecture}
-                  className="px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-md transition-colors"
-                >
-                  Regenerate Diagram
-                </button>
+                {userData?.role && userData.role !== "junior" && (
+                  <button
+                    onClick={handleRegenerateArchitecture}
+                    className="px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-md transition-colors"
+                  >
+                    Regenerate Diagram
+                  </button>
+                )}
               </div>
             </div>
           ) : (

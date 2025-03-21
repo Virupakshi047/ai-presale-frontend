@@ -24,11 +24,18 @@ interface AnalysisResult {
   featureBreakdown: FeatureBreakdown[];
 }
 
+interface UserData {
+  name: string;
+  email: string;
+  role: string;
+}
+
 export default function MainBody() {
   const [activeTab, setActiveTab] = useState("requirementAnalysis");
   const [analysisResults, setAnalysisResults] = useState<AnalysisResult | null>(
     null
   );
+  const [userData, setUserData] = useState<UserData | null>(null);
   // const [showVersions, setShowVersions] = useState(false);
   const pathname = usePathname();
   const router = useRouter();
@@ -52,11 +59,21 @@ export default function MainBody() {
     }
   }, [pathname, projects, setCurrentProject, router]);
 
+  useEffect(() => {
+    const userDataString = localStorage.getItem("userData");
+    if (userDataString) {
+      const parsedUserData = JSON.parse(userDataString);
+      setUserData(parsedUserData);
+    }
+  }, []);
+
   const tabs = [
     { id: "requirementAnalysis", label: "Requirement Analysis" },
     { id: "feature1", label: "Tech-stack" },
     { id: "feature2", label: "Business Analyst" },
-    { id: "feature3", label: "Effort and Cost estimation" },
+    ...(userData?.role !== "junior"
+      ? [{ id: "feature3", label: "Effort and Cost estimation" }]
+      : []),
     { id: "feature4", label: "Wireframe & UI" },
   ];
   const handleAnalysisResults = (results: AnalysisResult) => {
@@ -137,7 +154,9 @@ export default function MainBody() {
         {activeTab === "requirementAnalysis" && <RequirementAnalyzer />}
         {activeTab === "feature1" && <AITechStack />}
         {activeTab === "feature2" && <AIBusinessAnalyst />}
-        {activeTab === "feature3" && <EffortAndCost />}
+        {activeTab === "feature3" && userData?.role !== "junior" && (
+          <EffortAndCost />
+        )}
         {activeTab === "feature4" && <WireframeCanvas />}
       </div>
     </div>
