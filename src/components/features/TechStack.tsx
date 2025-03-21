@@ -206,6 +206,35 @@ const AITechStack: React.FC = () => {
     }
   };
 
+  const handleRegenerateArchitecture = async () => {
+    setArchitectureError("");
+    try {
+      const response = await fetch(
+        `http://localhost:8080/tech-architecture/re-generate-architecture-diagram/${currentProject?._id}`,
+        {
+          credentials: "include",
+          headers: { Accept: "application/json" },
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error(`Architecture regeneration failed: ${response.status}`);
+      }
+
+      const architectureData = await response.json();
+      setData((prev) => ({
+        ...prev,
+        architecture: architectureData,
+      }));
+    } catch (error) {
+      setArchitectureError(
+        error instanceof Error
+          ? error.message
+          : "Error regenerating architecture"
+      );
+    }
+  };
+
   const mermaidDiagram = useMemo(() => {
     if (!data.architecture?.architectureDiagram?.diagramData) {
       console.log("[TechStack] No diagram data available");
@@ -358,23 +387,41 @@ const AITechStack: React.FC = () => {
 
       {architectureError ? (
         <div className="bg-white rounded-lg shadow-md p-6">
-          <div className="text-center">
-            <button
-              onClick={handleRetryArchitecture}
-              className="px-4 py-2 bg-green-500 hover:bg-green-600 text-white rounded-md transition-colors"
-            >
-              Get Diagram
-            </button>
+          <div className="text-center space-y-4">
+            <div className="flex justify-center gap-4">
+              <button
+                onClick={handleRetryArchitecture}
+                className="px-4 py-2 bg-green-500 hover:bg-green-600 text-white rounded-md transition-colors"
+              >
+                Get diagram
+              </button>
+              <button
+                onClick={handleRegenerateArchitecture}
+                className="px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-md transition-colors"
+              >
+                Regenerate Diagram
+              </button>
+            </div>
           </div>
         </div>
       ) : (
         <div className="bg-white rounded-lg shadow-md p-6">
           {data.architecture?.architectureDiagram?.diagramData ? (
-            <div className="w-full h-full bg-gray-50 rounded-lg overflow-hidden">
-              <MermaidDiagram
-                chart={mermaidDiagram || "graph LR\nA[Loading...]"}
-                className="flex items-center justify-center"
-              />
+            <div className="space-y-6">
+              <div className="w-full h-full bg-gray-50 rounded-lg overflow-hidden">
+                <MermaidDiagram
+                  chart={mermaidDiagram || "graph LR\nA[Loading...]"}
+                  className="flex items-center justify-center"
+                />
+              </div>
+              <div className="flex justify-center">
+                <button
+                  onClick={handleRegenerateArchitecture}
+                  className="px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-md transition-colors"
+                >
+                  Regenerate Diagram
+                </button>
+              </div>
             </div>
           ) : (
             <div className="text-center py-8">

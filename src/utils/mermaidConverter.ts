@@ -43,26 +43,20 @@ export function convertJsonToMermaid(diagramJson: DiagramJson): string {
 
   nodes.forEach((node) => {
     const safeId = idMap[node.id];
-    let label = `${node.id}
-    `;
+    let label = `${node.id}`;
 
-    if (node.attributes) {
-      if (node.attributes.technology) {
-        label += `\n (${node.attributes.technology})`;
-      }
-      if (node.attributes.components && node.attributes.components.length) {
-        label += `\nComponents: ${node.attributes.components.join(', ')}`;
-      }
+    if (node.attributes?.technology) {
+      label += `\n(${node.attributes.technology})`;
     }
 
     let nodeRepresentation = `${safeId}["${label}"]`;
 
-    // Database representation
-    if (node.attributes.type === 'database') {
-      nodeRepresentation = `${safeId}[(${label})]`; // Cylindrical shape
+    // Safe check for type
+    if (node.attributes?.type === 'database') {
+      nodeRepresentation = `${safeId}[(${label})]`;
     }
 
-    if (node.attributes.type) {
+    if (node.attributes?.type) {
       if (!subgraphs[node.attributes.type]) {
         subgraphs[node.attributes.type] = [];
       }
