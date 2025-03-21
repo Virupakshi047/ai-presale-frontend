@@ -46,7 +46,7 @@ export default function Navbar() {
         <div className="flex items-center">
           <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg shadow-lg flex items-center justify-center">
             {/* Replace with your actual logo */}
-            <span className="text-white font-bold text-xl">A</span>
+            <span className="text-white font-bold text-xl">{userData?.name[0]}</span>
           </div>
           <div className="ml-4 hidden md:block">
             <h1 className="text-gray-700 font-medium">
@@ -55,7 +55,7 @@ export default function Navbar() {
                 {userData?.name || "User"}
               </span>
             </h1>
-            <p className="text-sm text-gray-500">{userData?.role || "Guest"}</p>
+            <p className="text-sm text-gray-500">Role : {(userData?.role || "Guest").toUpperCase()}</p>
           </div>
         </div>
       </div>

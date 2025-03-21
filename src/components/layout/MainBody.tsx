@@ -29,7 +29,7 @@ export default function MainBody() {
   const [analysisResults, setAnalysisResults] = useState<AnalysisResult | null>(
     null
   );
-  const [showVersions, setShowVersions] = useState(false);
+  // const [showVersions, setShowVersions] = useState(false);
   const pathname = usePathname();
   const router = useRouter();
   const { currentProject, projects, setCurrentProject } = useProject();
@@ -78,31 +78,9 @@ export default function MainBody() {
       {/* Added top padding for mobile */}
       {/* Project Header */}
       <div className="flex flex-col lg:flex-row lg:items-center justify-between mb-6 gap-4">
-        <div className="flex flex-col lg:flex-row lg:items-center gap-4">
-          <h1 className="text-3xl font-bold">
-            {currentProject?.name || "Select a Project"}
-          </h1>
-
-          {currentProject && (
-            <div className="relative">
-              <button
-                onClick={() => setShowVersions(!showVersions)}
-                className="flex items-center gap-2 px-3 py-2 text-sm bg-white border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors duration-200 shadow-sm"
-              >
-                <History size={16} className="text-gray-500" />
-                <span>Version 1.0.0</span>
-                <ChevronDown
-                  size={16}
-                  className={`text-gray-500 transition-transform duration-200 ${
-                    showVersions ? "rotate-180" : ""
-                  }`}
-                />
-              </button>
-              {/* ... existing versions dropdown ... */}
-            </div>
-          )}
-        </div>
-
+        <h1 className="text-3xl font-bold">
+          {currentProject?.name || "Select a Project"}
+        </h1>
         {currentProject && <AssignProject />}
       </div>
       {/* Project ID */}
