@@ -2,13 +2,10 @@
 
 import { useEffect, useState } from "react";
 import { useProject } from "@/context/ProjectContext";
-import {
-  ChevronLeft,
-  ChevronRight,
-  Maximize2,
-  Minimize2,
-  X,
-} from "lucide-react";
+import { ChevronLeft, ChevronRight, Maximize2, Minimize2 } from "lucide-react";
+
+// Module-level flag to ensure fetch happens only once per project ID
+const fetchedProjects: Record<string, boolean> = {};
 
 interface WireframeResponse {
   message: string;
@@ -30,6 +27,11 @@ export default function WireframeCanvas() {
   useEffect(() => {
     const fetchWireframes = async () => {
       if (!currentProject?._id) return;
+      // If we've already fetched for this project, exit
+      if (fetchedProjects[currentProject._id]) return;
+
+      // Mark this project as fetched
+      fetchedProjects[currentProject._id] = true;
 
       try {
         const response = await fetch(
@@ -55,6 +57,7 @@ export default function WireframeCanvas() {
     };
 
     fetchWireframes();
+    // We don't add a cleanup here because we want the flag to persist
   }, [currentProject?._id]);
 
   const handlePrevious = () => {
@@ -127,14 +130,20 @@ export default function WireframeCanvas() {
             }`}
           >
             <button
-              onClick={handlePrevious}
+              onClick={() =>
+                setCurrentIndex((prev) => (prev > 0 ? prev - 1 : prev))
+              }
               disabled={currentIndex === 0}
               className="p-2 rounded-full bg-black/50 text-white hover:bg-black/70 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
             >
               <ChevronLeft size={24} />
             </button>
             <button
-              onClick={handleNext}
+              onClick={() =>
+                setCurrentIndex((prev) =>
+                  prev < images.length - 1 ? prev + 1 : prev
+                )
+              }
               disabled={currentIndex === images.length - 1}
               className="p-2 rounded-full bg-black/50 text-white hover:bg-black/70 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
             >
@@ -149,7 +158,7 @@ export default function WireframeCanvas() {
             }`}
           >
             <button
-              onClick={toggleFullscreen}
+              onClick={() => setIsFullscreen(!isFullscreen)}
               className="p-2 rounded-full bg-black/50 text-white hover:bg-black/70 transition-all"
             >
               {isFullscreen ? <Minimize2 size={20} /> : <Maximize2 size={20} />}
