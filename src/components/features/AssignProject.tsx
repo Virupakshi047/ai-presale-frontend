@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { toast } from "react-hot-toast";
 import { useProject } from "@/context/ProjectContext";
+import { X } from "lucide-react";
 
 interface User {
   _id: string;
@@ -15,6 +16,13 @@ interface LoggedUserData {
   role: string;
 }
 
+interface CreateUserData {
+  name: string;
+  email: string;
+  password: string;
+  role: "head" | "associate" | "junior";
+}
+
 export default function AssignProject() {
   const [showModal, setShowModal] = useState(false);
   const [selectedUser, setSelectedUser] = useState<string>("");
@@ -22,6 +30,13 @@ export default function AssignProject() {
   const [loading, setLoading] = useState(false);
   const [showAssignedUsers, setShowAssignedUsers] = useState(false);
   const [loggedUser, setLoggedUser] = useState<LoggedUserData | null>(null);
+  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [createUserData, setCreateUserData] = useState<CreateUserData>({
+    name: "",
+    email: "",
+    password: "",
+    role: "junior",
+  });
 
   const { currentProject, setCurrentProject, projects, setProjects } =
     useProject();
@@ -156,6 +171,38 @@ export default function AssignProject() {
     }
   };
 
+  const handleCreateUser = async () => {
+    try {
+      const response = await fetch("http://localhost:8080/user", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "include",
+        body: JSON.stringify(createUserData),
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to create user");
+      }
+
+      const data = await response.json();
+      setUsers([...users, data]);
+      toast.success("User created successfully");
+      setShowCreateModal(false);
+      setCreateUserData({
+        name: "",
+        email: "",
+        password: "",
+        role: "junior",
+      });
+    } catch (error) {
+      toast.error(
+        error instanceof Error ? error.message : "Failed to create user"
+      );
+    }
+  };
+
   return (
     <div>
       {hasManageAccess && (
@@ -252,27 +299,151 @@ export default function AssignProject() {
                   ))}
             </div>
 
-            <div className="flex justify-end gap-3 mt-6">
-              <button
-                onClick={() => setShowModal(false)}
-                className="px-4 py-2 text-gray-600 hover:text-gray-800"
-              >
-                Close
-              </button>
-              {!showAssignedUsers && (
+            <div className="flex justify-between gap-3 mt-6">
+              <div className="flex gap-3">
                 <button
-                  onClick={handleAssign}
-                  disabled={!selectedUser || loading}
-                  className={`px-4 py-2 rounded-lg ${
-                    selectedUser && !loading
-                      ? "bg-blue-600 hover:bg-blue-700 text-white"
-                      : "bg-gray-200 text-gray-500 cursor-not-allowed"
-                  }`}
+                  onClick={() => setShowCreateModal(true)}
+                  className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
                 >
-                  {loading ? "Assigning..." : "Assign"}
+                  Create User
                 </button>
-              )}
+              </div>
+              <div className="flex gap-3">
+                <button
+                  onClick={() => setShowModal(false)}
+                  className="px-4 py-2 text-gray-600 hover:text-gray-800"
+                >
+                  Close
+                </button>
+                {!showAssignedUsers && (
+                  <button
+                    onClick={handleAssign}
+                    disabled={!selectedUser || loading}
+                    className={`px-4 py-2 rounded-lg ${
+                      selectedUser && !loading
+                        ? "bg-blue-600 hover:bg-blue-700 text-white"
+                        : "bg-gray-200 text-gray-500 cursor-not-allowed"
+                    }`}
+                  >
+                    {loading ? "Assigning..." : "Assign"}
+                  </button>
+                )}
+              </div>
             </div>
+          </div>
+        </div>
+      )}
+
+      {showCreateModal && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 w-[400px] max-w-full mx-4">
+            <div className="flex justify-between items-center mb-6">
+              <h3 className="text-xl font-semibold">Create New User</h3>
+              <button
+                onClick={() => setShowCreateModal(false)}
+                className="p-1 hover:bg-gray-100 rounded-full"
+              >
+                <X size={20} />
+              </button>
+            </div>
+
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                handleCreateUser();
+              }}
+              className="space-y-4"
+            >
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Name
+                </label>
+                <input
+                  type="text"
+                  value={createUserData.name}
+                  onChange={(e) =>
+                    setCreateUserData((prev) => ({
+                      ...prev,
+                      name: e.target.value,
+                    }))
+                  }
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  required
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Email
+                </label>
+                <input
+                  type="email"
+                  value={createUserData.email}
+                  onChange={(e) =>
+                    setCreateUserData((prev) => ({
+                      ...prev,
+                      email: e.target.value,
+                    }))
+                  }
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  required
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Password
+                </label>
+                <input
+                  type="password"
+                  value={createUserData.password}
+                  onChange={(e) =>
+                    setCreateUserData((prev) => ({
+                      ...prev,
+                      password: e.target.value,
+                    }))
+                  }
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  required
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Role
+                </label>
+                <select
+                  value={createUserData.role}
+                  onChange={(e) =>
+                    setCreateUserData((prev) => ({
+                      ...prev,
+                      role: e.target.value as CreateUserData["role"],
+                    }))
+                  }
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                >
+                  <option value="junior">Junior</option>
+                  <option value="associate">Associate</option>
+                  <option value="head">Head</option>
+                </select>
+              </div>
+
+              <div className="flex justify-end gap-3 pt-4">
+                <button
+                  type="button"
+                  onClick={() => setShowCreateModal(false)}
+                  className="px-4 py-2 text-gray-600 hover:text-gray-800"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+                >
+                  Create User
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}

@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Eye, EyeOff, LogIn } from "lucide-react";
-import Link from "next/link";
+import Image from "next/image";
 
 interface LoginForm {
   email: string;
@@ -82,34 +82,38 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-100 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
-      <div className="sm:mx-auto sm:w-full sm:max-w-md">
-        <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
-          Login to your account
-        </h2>
-        {/* <p className="mt-2 text-center text-sm text-gray-600">
-          Or{" "}
-          <Link
-            href="/"
-            className="font-medium text-blue-600 hover:text-blue-500"
-          >
-            sign up for a new account
-          </Link>
-        </p> */}
+    <div className="min-h-screen relative flex items-center justify-center">
+      {/* Background with overlay */}
+      {/* Background with overlay */}
+      <div className="absolute inset-0 z-0">
+        <Image
+          src="/images/background.jpg"
+          alt="Background"
+          fill
+          className="object-cover"
+          priority
+        />
+        <div className="absolute inset-0 bg-black/30 backdrop-blur-[2px]"></div>
       </div>
 
-      <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
-        <div className="bg-white py-8 px-4 shadow sm:rounded-lg sm:px-10">
+      {/* Login Container */}
+      <div className="relative z-10 w-full max-w-md px-4 sm:px-0">
+        <div className="text-center mb-8">
+          <h2 className="text-4xl font-bold text-white mb-2">Welcome Back!</h2>
+        </div>
+
+        {/* Login Form Card */}
+        <div className="bg-white/90 backdrop-blur-lg rounded-2xl shadow-2xl p-8">
           <form className="space-y-6" onSubmit={handleSubmit}>
             {/* Email Input */}
             <div>
               <label
                 htmlFor="email"
-                className="block text-sm font-medium text-gray-700"
+                className="block text-sm font-medium text-gray-700 mb-1"
               >
                 Email address
               </label>
-              <div className="mt-1">
+              <div className="group relative">
                 <input
                   id="email"
                   name="email"
@@ -120,7 +124,10 @@ export default function LoginPage() {
                   onChange={(e) =>
                     setFormData({ ...formData, email: e.target.value })
                   }
-                  className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                  className="block w-full px-4 py-3 rounded-xl border border-gray-200 shadow-sm 
+                           focus:ring-2 focus:ring-blue-500 focus:border-transparent
+                           transition-all duration-200 bg-white/70 backdrop-blur-sm"
+                  placeholder="Enter your email"
                 />
               </div>
             </div>
@@ -129,11 +136,11 @@ export default function LoginPage() {
             <div>
               <label
                 htmlFor="password"
-                className="block text-sm font-medium text-gray-700"
+                className="block text-sm font-medium text-gray-700 mb-1"
               >
                 Password
               </label>
-              <div className="mt-1 relative">
+              <div className="group relative">
                 <input
                   id="password"
                   name="password"
@@ -144,17 +151,21 @@ export default function LoginPage() {
                   onChange={(e) =>
                     setFormData({ ...formData, password: e.target.value })
                   }
-                  className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                  className="block w-full px-4 py-3 rounded-xl border border-gray-200 shadow-sm 
+                           focus:ring-2 focus:ring-blue-500 focus:border-transparent
+                           transition-all duration-200 bg-white/70 backdrop-blur-sm"
+                  placeholder="Enter your password"
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute inset-y-0 right-0 pr-3 flex items-center"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 p-2
+                           hover:bg-gray-100 rounded-full transition-all duration-200"
                 >
                   {showPassword ? (
-                    <EyeOff className="h-5 w-5 text-gray-400" />
+                    <EyeOff className="h-5 w-5 text-gray-500" />
                   ) : (
-                    <Eye className="h-5 w-5 text-gray-400" />
+                    <Eye className="h-5 w-5 text-gray-500" />
                   )}
                 </button>
               </div>
@@ -162,21 +173,37 @@ export default function LoginPage() {
 
             {/* Error Display */}
             {error && (
-              <div className="text-red-600 text-sm">
-                Check email or passowrd!😑
+              <div className="bg-red-50 text-red-600 px-4 py-3 rounded-xl flex items-center justify-center space-x-2">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  className="h-5 w-5"
+                  viewBox="0 0 20 20"
+                  fill="currentColor"
+                >
+                  <path
+                    fillRule="evenodd"
+                    d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z"
+                    clipRule="evenodd"
+                  />
+                </svg>
+                <span>Invalid email or password</span>
               </div>
             )}
 
             {/* Submit Button */}
-            <div>
-              <button
-                type="submit"
-                className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 cursor-pointer"
-              >
-                <LogIn className="h-5 w-5 mr-2" />
-                Login
-              </button>
-            </div>
+            <button
+              type="submit"
+              className="w-full flex items-center justify-center px-4 py-3 
+                       bg-gradient-to-r from-blue-600 to-blue-700 
+                       hover:from-blue-700 hover:to-blue-800
+                       text-white font-medium rounded-xl
+                       transform transition-all duration-200 
+                       hover:scale-[1.02] active:scale-[0.98]
+                       focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+            >
+              <LogIn className="h-5 w-5 mr-2" />
+              Sign in
+            </button>
           </form>
         </div>
       </div>
