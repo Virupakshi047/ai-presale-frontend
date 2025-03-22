@@ -40,7 +40,7 @@ export default function Navbar() {
   };
 
   return (
-    <nav className="flex items-center justify-between px-6 py-4 bg-white shadow-md sticky top-0 z-40 border-b border-gray-100">
+    <nav className="flex items-center justify-between px-6 py-4 bg-white shadow-md sticky w-screen top-0 z-40 border-b border-gray-100">
       <div className="flex items-center space-x-6">
         {/* Logo and Welcome Message */}
         <div className="flex items-center">
