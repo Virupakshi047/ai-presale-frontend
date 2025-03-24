@@ -351,8 +351,6 @@ export default function RequirementAnalyzer() {
       if (!response.ok) {
         throw new Error("Please Upload a file");
       }
-
-      const result: AnalysisResponse = await response.json();
       setSelectedFile(null);
       setRequirementText("");
 

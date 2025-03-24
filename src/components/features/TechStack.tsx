@@ -189,7 +189,7 @@ const AITechStack: React.FC = () => {
 
     fetchTechStack();
     i.current += 1;
-  }, [i, currentProject?._id]);
+  }, [i, currentProject?._id, fetchCount]);
 
   // Architecture Diagram Fetch
   useEffect(() => {

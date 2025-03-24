@@ -210,38 +210,6 @@ export default function AssignProject() {
     }
   };
 
-  const handleAssignProject = async () => {
-    if (!selectedUser) return;
-
-    try {
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_BACKEND_URL}/projects/assign`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          credentials: "include",
-          body: JSON.stringify({
-            userId: selectedUser,
-            projectId: currentProject?._id,
-          }),
-        }
-      );
-
-      if (!response.ok) {
-        throw new Error("Failed to assign project");
-      }
-
-      // Add success handling
-      setShowModal(false);
-      setSelectedUser("");
-      // Optionally refresh user list or show success message
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to assign project");
-    }
-  };
-
   return (
     <div>
       {error && <div className="text-red-600 mb-4">{error}</div>}

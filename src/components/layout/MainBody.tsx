@@ -17,13 +17,6 @@ interface FeatureBreakdown {
   description: string;
 }
 
-interface AnalysisResult {
-  message: string;
-  functionalRequirement: string[];
-  nonFunctionalRequirement: string[];
-  featureBreakdown: FeatureBreakdown[];
-}
-
 interface UserData {
   name: string;
   email: string;

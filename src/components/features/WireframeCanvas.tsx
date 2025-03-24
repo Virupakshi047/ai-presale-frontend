@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useProject } from "@/context/ProjectContext";
 import { ChevronLeft, ChevronRight, Maximize2, Minimize2 } from "lucide-react";
+import Image from "next/image";
 
 // Module-level flag to ensure fetch happens only once per project ID
 const fetchedProjects: Record<string, boolean> = {};
@@ -60,18 +61,6 @@ export default function WireframeCanvas() {
     // We don't add a cleanup here because we want the flag to persist
   }, [currentProject?._id]);
 
-  const handlePrevious = () => {
-    setCurrentIndex((prev) => (prev > 0 ? prev - 1 : prev));
-  };
-
-  const handleNext = () => {
-    setCurrentIndex((prev) => (prev < images.length - 1 ? prev + 1 : prev));
-  };
-
-  const toggleFullscreen = () => {
-    setIsFullscreen(!isFullscreen);
-  };
-
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-96">
@@ -115,9 +104,12 @@ export default function WireframeCanvas() {
             isFullscreen ? "h-screen" : "h-[600px]"
           } bg-gray-900`}
         >
-          <img
+          <Image
             src={images[currentIndex]}
             alt={`Wireframe ${currentIndex + 1}`}
+            fill={true}
+            quality={75}
+            priority={currentIndex === 0}
             className={`w-full h-full object-contain ${
               isFullscreen ? "p-4" : ""
             }`}

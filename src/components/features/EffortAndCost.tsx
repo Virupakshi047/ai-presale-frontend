@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import React, { useState, useMemo } from "react";
 import { useProject } from "@/context/ProjectContext";
 import {
   Download,
@@ -18,9 +18,17 @@ import {
 } from "@tanstack/react-table";
 
 // Define types outside component
+
 interface EstimationResponse {
   message: string;
   effortEstimationUrl: string;
+}
+
+interface ColumnDef {
+  id: string;
+  header: string;
+  accessorKey: string;
+  cell?: (info: { getValue: () => any }) => React.JSX.Element;
 }
 
 interface ExcelData {
@@ -30,7 +38,7 @@ interface ExcelData {
 interface ExcelSheet {
   sheetName: string;
   data: ExcelData[];
-  columns: any[]; // We'll keep this any since it's from TanStack Table
+  columns: ColumnDef[]; // We'll keep this any since it's from TanStack Table
 }
 
 export default function EffortAndCost() {
@@ -60,9 +68,9 @@ export default function EffortAndCost() {
 
       const columns =
         jsonData.length > 0
-          ? Object.keys(jsonData[0]).map((key) =>
-              columnHelper.accessor(key, { header: key })
-            )
+          ? (Object.keys(jsonData[0]).map((key) =>
+              columnHelper.accessor(key, { id: key, header: key })
+            ) as unknown as ColumnDef[])
           : [];
 
       return {
