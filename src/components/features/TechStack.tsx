@@ -90,7 +90,7 @@ const AITechStack: React.FC = () => {
 
   useEffect(() => {
     const userDataString = localStorage.getItem("userData");
-    if (userDataString) {
+    if (typeof window !== "undefined" && userDataString) {
       const parsedUserData = JSON.parse(userDataString);
       setUserData(parsedUserData);
     }
