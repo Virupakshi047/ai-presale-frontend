@@ -35,6 +35,7 @@ export default function EffortAndCost() {
   const [sheets, setSheets] = useState<ExcelSheet[]>([]);
   const [activeSheetName, setActiveSheetName] = useState("");
   const [isViewing, setIsViewing] = useState(false);
+  const [isRegenerating, setIsRegenerating] = useState(false);
 
   const buttonText = isViewing
     ? isLoading
@@ -139,6 +140,36 @@ export default function EffortAndCost() {
     }
   };
 
+  const handleRegenerate = async () => {
+    if (!currentProject?._id) return;
+
+    setIsRegenerating(true);
+    setError(null);
+
+    try {
+      const response = await fetch(
+        `http://localhost:8080/estimation/regenerate/${currentProject._id}`,
+        {
+          credentials: "include",
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error("Failed to regenerate estimation");
+      }
+
+      // Refresh the view after regeneration
+      await handleView();
+    } catch (err) {
+      setError(
+        err instanceof Error ? err.message : "Failed to regenerate estimation"
+      );
+      console.error("Error regenerating estimation:", err);
+    } finally {
+      setIsRegenerating(false);
+    }
+  };
+
   const activeSheet = useMemo(
     () => sheets.find((sheet) => sheet.sheetName === activeSheetName),
     [sheets, activeSheetName]
@@ -201,14 +232,16 @@ export default function EffortAndCost() {
             </button>
           </div>
           <button
-            onClick={() => {
-              // TODO: Implement regeneration logic
-              console.log("Regenerating user personas...");
-            }}
-            className="flex items-center justify-center gap-2 px-4 py-2 text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded-md transition-colors duration-200 cursor-pointer w-full sm:w-auto"
+            onClick={handleRegenerate}
+            disabled={isRegenerating || isLoading}
+            className={`flex items-center justify-center gap-2 px-4 py-2 text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded-md transition-colors duration-200 cursor-pointer w-full sm:w-auto ${
+              isRegenerating || isLoading ? "opacity-50 cursor-not-allowed" : ""
+            }`}
           >
-            <RefreshCw className="w-4 h-4" />
-            <span>Re-Generate</span>
+            <RefreshCw
+              className={`w-4 h-4 ${isRegenerating ? "animate-spin" : ""}`}
+            />
+            <span>{isRegenerating ? "Regenerating..." : "Re-Generate"}</span>
           </button>
         </div>
 

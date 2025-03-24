@@ -98,6 +98,7 @@ export default function AIBusinessAnalyst() {
   });
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [isRegenerating, setIsRegenerating] = useState(false);
 
   useEffect(() => {
     const fetchUserPersona = async () => {
@@ -164,6 +165,47 @@ export default function AIBusinessAnalyst() {
 
     fetchUserPersona();
   }, [currentProject?._id]);
+
+  const handleRegenerate = async () => {
+    if (!currentProject?._id) return;
+
+    setIsRegenerating(true);
+    try {
+      const response = await fetch(
+        `http://localhost:8080/user-persona/regenerate/${currentProject._id}`,
+        {
+          credentials: "include",
+          headers: {
+            Accept: "application/json",
+          },
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error("Failed to regenerate user personas");
+      }
+
+      const responseData: UserPersonaResponse = await response.json();
+
+      // Update the data with new personas
+      setData({
+        personas: responseData.userPersona.personas,
+        featureCategories:
+          responseData.userPersona.categorized_features.feature_categories,
+      });
+
+      // Clear any selected workflow when regenerating
+      setSelectedWorkflow(null);
+    } catch (err) {
+      setError(
+        err instanceof Error
+          ? err.message
+          : "Failed to regenerate user personas"
+      );
+    } finally {
+      setIsRegenerating(false);
+    }
+  };
 
   // Loading state
   if (isLoading) {
@@ -261,14 +303,19 @@ export default function AIBusinessAnalyst() {
           User Personas & Workflows
         </h2>
         <button
-          onClick={() => {
-            // TODO: Implement regeneration logic
-            console.log("Regenerating user personas...");
-          }}
-          className="flex items-center gap-2 px-4 py-2 text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded-md transition-colors duration-200 cursor-pointer"
+          onClick={handleRegenerate}
+          disabled={isRegenerating}
+          className={`flex items-center gap-2 px-4 py-2 rounded-md transition-colors duration-200 cursor-pointer
+            ${
+              isRegenerating
+                ? "bg-gray-100 text-gray-400 cursor-not-allowed"
+                : "text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+            }`}
         >
-          <RefreshCw className="w-4 h-4" />
-          <span>Re-Generate</span>
+          <RefreshCw
+            className={`w-4 h-4 ${isRegenerating ? "animate-spin" : ""}`}
+          />
+          <span>{isRegenerating ? "Regenerating..." : "Re-Generate"}</span>
         </button>
       </div>
       <div
