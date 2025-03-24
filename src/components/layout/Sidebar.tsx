@@ -105,6 +105,9 @@ export default function Sidebar() {
   };
 
   const getLoggedUserData = (): UserData | null => {
+    if (typeof window === "undefined") {
+      return null;
+    }
     const userData = localStorage.getItem("userData");
     return userData ? JSON.parse(userData) : null;
   };
