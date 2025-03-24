@@ -208,7 +208,7 @@ export default function AssignProject() {
       {hasManageAccess && (
         <button
           onClick={() => setShowModal(true)}
-          className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-200 flex items-center gap-2"
+          className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-200 flex items-center gap-2 cursor-pointer"
         >
           <svg
             xmlns="http://www.w3.org/2000/svg"
@@ -237,7 +237,7 @@ export default function AssignProject() {
               <h3 className="text-xl font-semibold">Management of Users</h3>
               <button
                 onClick={() => setShowAssignedUsers(!showAssignedUsers)}
-                className="text-sm px-3 py-1 bg-gray-100 rounded-md hover:bg-gray-200"
+                className="text-sm px-3 py-1 bg-gray-100 rounded-md hover:bg-gray-200 cursor-pointer"
               >
                 {showAssignedUsers
                   ? "Show Available Users"
@@ -251,7 +251,7 @@ export default function AssignProject() {
                   currentProject?.assignedUsers.map((user) => (
                     <div
                       key={user._id}
-                      className="flex items-center justify-between p-3 rounded-lg border-2 border-gray-200"
+                      className="flex items-center justify-between p-3 rounded-lg border-2 border-gray-200 curosr-pointer"
                     >
                       <div>
                         <p className="font-medium">{user.name}</p>
@@ -263,7 +263,7 @@ export default function AssignProject() {
                       {user.role !== "head" && (
                         <button
                           onClick={() => handleUnassign(user._id)}
-                          className="text-red-600 hover:text-red-800"
+                          className="text-red-600 hover:text-red-800 cursor-pointer"
                         >
                           Unassign
                         </button>
@@ -303,7 +303,7 @@ export default function AssignProject() {
               <div className="flex gap-3">
                 <button
                   onClick={() => setShowCreateModal(true)}
-                  className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+                  className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors cursor-pointer"
                 >
                   Create User
                 </button>
@@ -319,7 +319,7 @@ export default function AssignProject() {
                   <button
                     onClick={handleAssign}
                     disabled={!selectedUser || loading}
-                    className={`px-4 py-2 rounded-lg ${
+                    className={`px-4 py-2 rounded-lg cursor-pointer ${
                       selectedUser && !loading
                         ? "bg-blue-600 hover:bg-blue-700 text-white"
                         : "bg-gray-200 text-gray-500 cursor-not-allowed"
@@ -341,7 +341,7 @@ export default function AssignProject() {
               <h3 className="text-xl font-semibold">Create New User</h3>
               <button
                 onClick={() => setShowCreateModal(false)}
-                className="p-1 hover:bg-gray-100 rounded-full"
+                className="p-1 hover:bg-gray-100 rounded-full cursor-pointer"
               >
                 <X size={20} />
               </button>
@@ -432,13 +432,13 @@ export default function AssignProject() {
                 <button
                   type="button"
                   onClick={() => setShowCreateModal(false)}
-                  className="px-4 py-2 text-gray-600 hover:text-gray-800"
+                  className="px-4 py-2 text-gray-600 hover:text-gray-800 cursor-pointer"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+                  className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors cursor-pointer" 
                 >
                   Create User
                 </button>
