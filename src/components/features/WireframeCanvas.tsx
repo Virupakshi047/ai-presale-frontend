@@ -35,7 +35,7 @@ export default function WireframeCanvas() {
 
       try {
         const response = await fetch(
-          `http://localhost:8080/wireframe/${currentProject._id}`,
+          `${process.env.NEXT_PUBLIC_BACKEND_URL}/wireframe/${currentProject._id}`,
           {
             credentials: "include",
           }

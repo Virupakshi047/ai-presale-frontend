@@ -45,9 +45,12 @@ export default function AssignProject() {
   useEffect(() => {
     const fetchUsers = async () => {
       try {
-        const response = await fetch("http://localhost:8080/user", {
-          credentials: "include",
-        });
+        const response = await fetch(
+          `${process.env.NEXT_PUBLIC_BACKEND_URL}/user`,
+          {
+            credentials: "include",
+          }
+        );
         if (!response.ok) throw new Error("Failed to fetch users");
         const data = await response.json();
         setUsers(data);
@@ -96,7 +99,7 @@ export default function AssignProject() {
     setLoading(true);
     try {
       const response = await fetch(
-        `http://localhost:8080/project/${currentProject._id}/assign/${selectedUser}`,
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}/project/${currentProject._id}/assign/${selectedUser}`,
         {
           method: "POST",
           credentials: "include",
@@ -145,7 +148,7 @@ export default function AssignProject() {
 
     try {
       const response = await fetch(
-        `http://localhost:8080/project/${currentProject._id}/unassign/${userId}`,
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}/project/${currentProject._id}/unassign/${userId}`,
         {
           method: "POST",
           credentials: "include",
@@ -173,14 +176,17 @@ export default function AssignProject() {
 
   const handleCreateUser = async () => {
     try {
-      const response = await fetch("http://localhost:8080/user", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        credentials: "include",
-        body: JSON.stringify(createUserData),
-      });
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}/user`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          credentials: "include",
+          body: JSON.stringify(createUserData),
+        }
+      );
 
       if (!response.ok) {
         throw new Error("Failed to create user");
@@ -438,7 +444,7 @@ export default function AssignProject() {
                 </button>
                 <button
                   type="submit"
-                  className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors cursor-pointer" 
+                  className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors cursor-pointer"
                 >
                   Create User
                 </button>

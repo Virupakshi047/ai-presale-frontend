@@ -175,7 +175,7 @@ export default function RequirementAnalyzer() {
 
       try {
         const response = await fetch(
-          `http://localhost:8080/requirment-analysis/${currentProject._id}`,
+          `${process.env.NEXT_PUBLIC_BACKEND_URL}/requirment-analysis/${currentProject._id}`,
           {
             credentials: "include",
             headers: { Accept: "application/json" },
@@ -341,7 +341,7 @@ export default function RequirementAnalyzer() {
 
     try {
       const response = await fetch(
-        `http://localhost:8080/requirment-analysis/${currentProject._id}`,
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}/requirment-analysis/${currentProject._id}`,
         {
           method: "POST",
           body: formData,
@@ -363,7 +363,7 @@ export default function RequirementAnalyzer() {
 
       // Automatically fetch and show results
       const analysisResponse = await fetch(
-        `http://localhost:8080/requirment-analysis/${projectId}`,
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}/requirment-analysis/${projectId}`,
         {
           credentials: "include",
           headers: { Accept: "application/json" },

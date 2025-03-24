@@ -116,7 +116,7 @@ export default function AIBusinessAnalyst() {
         }
 
         const response = await fetch(
-          `http://localhost:8080/user-persona/${currentProject._id}`,
+          `${process.env.NEXT_PUBLIC_BACKEND_URL}/user-persona/${currentProject._id}`,
           {
             credentials: "include",
             headers: {
@@ -172,7 +172,7 @@ export default function AIBusinessAnalyst() {
     setIsRegenerating(true);
     try {
       const response = await fetch(
-        `http://localhost:8080/user-persona/regenerate/${currentProject._id}`,
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}/user-persona/regenerate/${currentProject._id}`,
         {
           credentials: "include",
           headers: {
