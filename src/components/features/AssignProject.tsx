@@ -37,7 +37,7 @@ export default function AssignProject() {
     password: "",
     role: "junior",
   });
-  const [error, setError] = useState<string | null>(null);
+  const [error] = useState<string | null>(null);
 
   const { currentProject, setCurrentProject, projects, setProjects } =
     useProject();
@@ -171,7 +171,11 @@ export default function AssignProject() {
       setCurrentProject(data.project);
       toast.success("User unassigned successfully");
     } catch (error) {
-      toast.error("Failed to unassign user");
+      toast.error(
+        error instanceof Error
+          ? `Failed to unassign user: ${error.message}`
+          : "Failed to unassign user"
+      );
     }
   };
 

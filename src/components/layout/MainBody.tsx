@@ -12,11 +12,6 @@ import WireframeCanvas from "@/components/features/WireframeCanvas";
 import AssignProject from "../features/AssignProject";
 // import { Toaster } from "react-hot-toast";
 
-interface FeatureBreakdown {
-  component: string;
-  description: string;
-}
-
 interface UserData {
   name: string;
   email: string;

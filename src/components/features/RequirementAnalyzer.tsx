@@ -33,11 +33,6 @@ interface AnalysisResult {
   featureBreakdown: Module[];
 }
 
-interface AnalysisResponse {
-  message: string;
-  data: AnalysisResult;
-}
-
 interface LoggedUserData {
   name: string;
   email: string;
@@ -524,25 +519,25 @@ export default function RequirementAnalyzer() {
                       description: string
                     ): void {
                       setActiveFeature((prev) => {
-                      // If clicking the same feature, toggle it off
-                      if (
-                        prev.moduleIndex === moduleIndex &&
-                        prev.featureIndex === featureIndex
-                      ) {
+                        // If clicking the same feature, toggle it off
+                        if (
+                          prev.moduleIndex === moduleIndex &&
+                          prev.featureIndex === featureIndex
+                        ) {
+                          return {
+                            moduleIndex: null,
+                            featureIndex: null,
+                            subfeatureIndex: null,
+                            description: "",
+                          };
+                        }
+                        // Otherwise, set the new active feature
                         return {
-                        moduleIndex: null,
-                        featureIndex: null,
-                        subfeatureIndex: null,
-                        description: "",
+                          moduleIndex,
+                          featureIndex,
+                          subfeatureIndex: null,
+                          description,
                         };
-                      }
-                      // Otherwise, set the new active feature
-                      return {
-                        moduleIndex,
-                        featureIndex,
-                        subfeatureIndex: null,
-                        description,
-                      };
                       });
                     }
 

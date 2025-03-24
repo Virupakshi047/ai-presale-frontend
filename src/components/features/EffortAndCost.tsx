@@ -24,11 +24,14 @@ interface EstimationResponse {
   effortEstimationUrl: string;
 }
 
+interface CellValue {
+  getValue: () => string | number;
+}
 interface ColumnDef {
   id: string;
   header: string;
   accessorKey: string;
-  cell?: (info: { getValue: () => any }) => React.JSX.Element;
+  cell?: (info: CellValue) => React.JSX.Element;
 }
 
 interface ExcelData {
