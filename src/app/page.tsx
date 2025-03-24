@@ -2,12 +2,12 @@
 
 import { motion } from "framer-motion";
 import Link from "next/link";
+import Image from "next/image";
 
 export default function LandingPage() {
   const handleSendMessage = (e: React.FormEvent) => {
-    e.preventDefault(); 
+    e.preventDefault();
     console.log("Message sent!");
-    
   };
   return (
     <div className="bg-gray-50 text-gray-900 min-h-screen">
@@ -209,6 +209,18 @@ export default function LandingPage() {
                   Coming Soon
                 </span>
               </motion.div>
+              <motion.div
+                whileHover={{
+                  scale: 1.02,
+                  boxShadow: "0px 4px 10px rgba(0, 0, 0, 0.1)",
+                }}
+                transition={{ duration: 0.2 }}
+                className="bg-white rounded-xl p-6 shadow-lg"
+              >
+                <p className="text-gray-700">
+                  {"Don&apos;t miss out on our powerful features"}
+                </p>
+              </motion.div>
             </div>
           </div>
         </section>
@@ -235,9 +247,11 @@ export default function LandingPage() {
                   </p>
                 </div>
                 <div className="md:w-1/2">
-                  <img
+                  <Image
                     src="/images/input.jpg"
                     alt="Upload Requirements"
+                    width={500}
+                    height={300}
                     className="rounded-lg shadow-lg"
                   />
                 </div>
@@ -255,9 +269,11 @@ export default function LandingPage() {
                   </p>
                 </div>
                 <div className="md:w-1/2">
-                  <img
+                  <Image
                     src="/images/aiimage.jpg"
                     alt="AI Processing"
+                    width={500}
+                    height={300}
                     className="rounded-lg shadow-lg"
                   />
                 </div>
@@ -274,9 +290,11 @@ export default function LandingPage() {
                   </p>
                 </div>
                 <div className="md:w-1/2">
-                  <img
+                  <Image
                     src="/images/collab.jpg"
                     alt="Review and Collaborate"
+                    width={500}
+                    height={300}
                     className="rounded-lg shadow-lg"
                   />
                 </div>

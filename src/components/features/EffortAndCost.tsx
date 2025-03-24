@@ -28,6 +28,24 @@ interface ExcelSheet {
   columns: any[];
 }
 
+interface EstimationData {
+  // Define your types here
+  sheetName: string;
+  data: Record<string, unknown>;
+}
+
+// Define proper types for state
+interface Sheet {
+  sheetName: string;
+  data: Record<string, unknown>;
+}
+
+const [sheets, setSheets] = useState<Sheet[]>([]);
+const [activeSheetName, setActiveSheetName] = useState<string | null>(null);
+
+// Replace 'any' with proper types
+const [data, setData] = useState<EstimationData[]>([]);
+
 export default function EffortAndCost() {
   const { currentProject } = useProject();
   const [isLoading, setIsLoading] = useState(false);

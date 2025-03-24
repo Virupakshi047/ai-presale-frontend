@@ -189,7 +189,7 @@ const AITechStack: React.FC = () => {
     return () => {
       isMounted = false;
     };
-  }, [currentProject?._id]);
+  }, [currentProject?._id, fetchArchitecture]);
 
   const handleRetryArchitecture = async () => {
     setArchitectureError("");

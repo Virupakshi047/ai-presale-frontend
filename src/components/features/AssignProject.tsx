@@ -209,6 +209,14 @@ export default function AssignProject() {
     }
   };
 
+  const handleAssignProject = async () => {
+    try {
+      // API call logic
+    } catch (err) {
+      console.error("Error assigning project:", err);
+    }
+  };
+
   return (
     <div>
       {hasManageAccess && (
