@@ -109,7 +109,7 @@ const AITechStack: React.FC = () => {
         })`
       );
       const architectureResponse = await fetch(
-        `http://localhost:8080/tech-architecture/generate-architecture-diagram/${currentProject._id}`,
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}/tech-architecture/generate-architecture-diagram/${currentProject._id}`,
         {
           credentials: "include",
           headers: { Accept: "application/json" },
@@ -153,7 +153,7 @@ const AITechStack: React.FC = () => {
       console.log("this is the ", i++);
       try {
         const response = await fetch(
-          `http://localhost:8080/tech-architecture/generate-tech-stack/${currentProject._id}`,
+          `${process.env.NEXT_PUBLIC_BACKEND_URL}/tech-architecture/generate-tech-stack/${currentProject._id}`,
           {
             credentials: "include",
             headers: { Accept: "application/json" },
@@ -195,7 +195,7 @@ const AITechStack: React.FC = () => {
     setArchitectureError("");
     try {
       const response = await fetch(
-        `http://localhost:8080/tech-architecture/generate-architecture-diagram/${currentProject?._id}`,
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}/tech-architecture/generate-architecture-diagram/${currentProject?._id}`,
         {
           credentials: "include",
           headers: { Accept: "application/json" },
@@ -222,7 +222,7 @@ const AITechStack: React.FC = () => {
     setArchitectureError("");
     try {
       const response = await fetch(
-        `http://localhost:8080/tech-architecture/re-generate-architecture-diagram/${currentProject?._id}`,
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}/tech-architecture/re-generate-architecture-diagram/${currentProject?._id}`,
         {
           credentials: "include",
           headers: { Accept: "application/json" },

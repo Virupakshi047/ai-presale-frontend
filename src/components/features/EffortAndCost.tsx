@@ -58,7 +58,7 @@ export default function EffortAndCost() {
 
     try {
       const response = await fetch(
-        `http://localhost:8080/estimation/${currentProject._id}`,
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}/estimation/${currentProject._id}`,
         { credentials: "include" }
       );
 
@@ -115,7 +115,7 @@ export default function EffortAndCost() {
 
     try {
       const response = await fetch(
-        `http://localhost:8080/estimation/${currentProject._id}`,
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}/estimation/${currentProject._id}`,
         { credentials: "include" }
       );
 
@@ -148,7 +148,7 @@ export default function EffortAndCost() {
 
     try {
       const response = await fetch(
-        `http://localhost:8080/estimation/regenerate/${currentProject._id}`,
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}/estimation/regenerate/${currentProject._id}`,
         {
           credentials: "include",
         }

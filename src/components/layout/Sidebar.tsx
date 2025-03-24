@@ -42,16 +42,20 @@ export default function Sidebar() {
 
   const router = useRouter();
   const pathname = usePathname();
+  const token = localStorage.getItem("authToken");
 
   useEffect(() => {
     const fetchProjects = async () => {
       try {
-        const response = await fetch("http://localhost:8080/project", {
-          credentials: "include",
-          headers: {
-            Accept: "application/json",
-          },
-        });
+        const response = await fetch(
+          `${process.env.NEXT_PUBLIC_BACKEND_URL}/project`,
+          {
+            credentials: "include",
+            headers: {
+              Accept: "application/json",
+            },
+          }
+        );
 
         if (!response.ok) {
           throw new Error("Failed to fetch projects");
@@ -105,18 +109,22 @@ export default function Sidebar() {
 
     setIsCreating(true);
     try {
-      const response = await fetch("http://localhost:8080/project", {
-        method: "POST",
-        credentials: "include",
-        headers: {
-          "Content-Type": "application/json",
-          Accept: "application/json",
-        },
-        body: JSON.stringify({
-          name: newProjectName,
-          createdBy: "67d5539c1ae9799ec0e8f377",
-        }),
-      });
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}/project`,
+        {
+          method: "POST",
+          credentials: "include",
+          headers: {
+            "Content-Type": "application/json",
+            Accept: "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            name: newProjectName,
+            createdBy: "67d5539c1ae9799ec0e8f377",
+          }),
+        }
+      );
 
       if (!response.ok) {
         throw new Error("Failed to create project");
@@ -141,7 +149,7 @@ export default function Sidebar() {
   const handleEditProject = async (projectId: string, newName: string) => {
     try {
       const response = await fetch(
-        `http://localhost:8080/project/${projectId}`,
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}/project/${projectId}`,
         {
           method: "PUT",
           credentials: "include",
@@ -182,7 +190,7 @@ export default function Sidebar() {
 
     try {
       const response = await fetch(
-        `http://localhost:8080/project/${projectId}`,
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}/project/${projectId}`,
         {
           method: "DELETE",
           credentials: "include",
