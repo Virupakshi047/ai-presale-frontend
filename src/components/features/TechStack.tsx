@@ -77,7 +77,7 @@ const AITechStack: React.FC = () => {
     architecture: null,
   });
 
-  const RETRY_DELAY = 2000; // 2 seconds
+  const RETRY_DELAY = 10000; // 10 seconds
   const MAX_RETRIES = 3;
 
   useEffect(() => {
