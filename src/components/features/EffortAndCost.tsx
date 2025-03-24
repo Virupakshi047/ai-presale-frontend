@@ -2,7 +2,13 @@
 
 import { useState, useMemo } from "react";
 import { useProject } from "@/context/ProjectContext";
-import { Download, FileSpreadsheet, Loader2, Eye } from "lucide-react";
+import {
+  Download,
+  FileSpreadsheet,
+  Loader2,
+  Eye,
+  RefreshCw,
+} from "lucide-react";
 import * as XLSX from "xlsx";
 import {
   useReactTable,
@@ -145,17 +151,18 @@ export default function EffortAndCost() {
   });
 
   return (
-    <div className="max-w-7xl mx-auto p-8">
-      <div className="bg-white rounded-lg shadow-md p-6">
-        <div className="flex items-center justify-between mb-6">
-          <h2 className="text-2xl font-bold text-gray-800">
-            Effort and Cost Estimation
-          </h2>
-          <div className="flex gap-4">
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <h2 className="text-xl sm:text-2xl font-bold text-gray-800 p-3 sm:p-5">
+        Effort and Cost Estimation
+      </h2>
+      <div className="bg-white rounded-lg shadow-md p-4 sm:p-6">
+        {/* Button Group */}
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
+          <div className="flex flex-col sm:flex-row gap-4 w-full sm:w-auto">
             <button
               onClick={handleView}
               disabled={isLoading}
-              className={`flex items-center cursor-pointer gap-2 px-4 py-2 rounded-lg text-white transition-colors duration-200 ${
+              className={`flex items-center justify-center cursor-pointer gap-2 px-4 py-2 rounded-lg text-white transition-colors duration-200 w-full sm:w-auto ${
                 isViewing
                   ? "bg-gray-600 hover:bg-gray-700"
                   : isLoading
@@ -168,13 +175,13 @@ export default function EffortAndCost() {
               ) : (
                 <Eye className={`w-5 h-5 ${isViewing ? "opacity-50" : ""}`} />
               )}
-              <span >{buttonText}</span>
+              <span>{buttonText}</span>
             </button>
 
             <button
               onClick={handleDownload}
               disabled={isLoading}
-              className={`flex items-center cursor-pointer gap-2 px-4 py-2 rounded-lg text-white transition-colors duration-200 ${
+              className={`flex items-center justify-center cursor-pointer gap-2 px-4 py-2 rounded-lg text-white transition-colors duration-200 w-full sm:w-auto ${
                 isLoading
                   ? "bg-blue-400 cursor-not-allowed"
                   : "bg-blue-600 hover:bg-blue-700"
@@ -188,27 +195,39 @@ export default function EffortAndCost() {
                   <Download className="w-5 h-5" />
                 </>
               )}
-              <span>
+              <span className="whitespace-nowrap">
                 {isLoading ? "Downloading..." : "Download Estimation"}
               </span>
             </button>
           </div>
+          <button
+            onClick={() => {
+              // TODO: Implement regeneration logic
+              console.log("Regenerating user personas...");
+            }}
+            className="flex items-center justify-center gap-2 px-4 py-2 text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded-md transition-colors duration-200 cursor-pointer w-full sm:w-auto"
+          >
+            <RefreshCw className="w-4 h-4" />
+            <span>Re-Generate</span>
+          </button>
         </div>
 
+        {/* Error Message */}
         {error && (
-          <div className="p-4 bg-red-50 text-red-600 rounded-lg mt-4">
+          <div className="p-4 bg-red-50 text-red-600 rounded-lg mt-4 text-sm sm:text-base">
             {error}
           </div>
         )}
 
+        {/* Sheet Tabs and Table */}
         {isViewing && sheets.length > 0 && (
           <div className="mt-6">
-            <div className="flex border-b border-gray-200 mb-4">
+            <div className="flex overflow-x-auto scrollbar-hide border-b border-gray-200">
               {sheets.map((sheet) => (
                 <button
                   key={sheet.sheetName}
                   onClick={() => setActiveSheetName(sheet.sheetName)}
-                  className={`px-4 py-2 text-sm font-medium ${
+                  className={`px-3 sm:px-4 py-2 text-xs sm:text-sm font-medium whitespace-nowrap ${
                     activeSheetName === sheet.sheetName
                       ? "border-b-2 border-blue-500 text-blue-600"
                       : "text-gray-500 hover:text-gray-700"
@@ -219,7 +238,7 @@ export default function EffortAndCost() {
               ))}
             </div>
 
-            <div className="border rounded-lg overflow-x-auto">
+            <div className="border rounded-lg overflow-x-auto -mx-4 sm:mx-0">
               <table className="min-w-full divide-y divide-gray-200">
                 <thead className="bg-gray-50">
                   {table.getHeaderGroups().map((headerGroup) => (
@@ -227,7 +246,7 @@ export default function EffortAndCost() {
                       {headerGroup.headers.map((header) => (
                         <th
                           key={header.id}
-                          className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                          className="px-3 sm:px-6 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
                         >
                           {flexRender(
                             header.column.columnDef.header,
@@ -244,7 +263,7 @@ export default function EffortAndCost() {
                       {row.getVisibleCells().map((cell) => (
                         <td
                           key={cell.id}
-                          className="px-6 py-4 whitespace-nowrap text-sm text-gray-500"
+                          className="px-3 sm:px-6 py-2 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-gray-500"
                         >
                           {flexRender(
                             cell.column.columnDef.cell,
@@ -260,7 +279,8 @@ export default function EffortAndCost() {
           </div>
         )}
 
-        <div className="text-gray-600 mt-6">
+        {/* Description */}
+        <div className="text-gray-600 mt-6 text-sm sm:text-base">
           <p>
             Download or view the detailed effort and cost estimation for your
             project. The Excel file contains multiple sheets including:

@@ -1,5 +1,6 @@
 "uuse client";
 import React, { useEffect, useState, useMemo } from "react";
+import { RefreshCw } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useProject } from "@/context/ProjectContext";
 import MermaidDiagram from "../ui/MermaidDiagram";
@@ -76,6 +77,9 @@ const AITechStack: React.FC = () => {
     architecture: null,
   });
 
+  const RETRY_DELAY = 2000; // 2 seconds
+  const MAX_RETRIES = 3;
+
   useEffect(() => {
     console.log("[TechStack] Architecture data:", data.architecture);
   }, [data.architecture]); // Debug log to check what data we have
@@ -89,10 +93,64 @@ const AITechStack: React.FC = () => {
   }, []);
 
   // Tech Stack Fetch
+  let i = 1;
+  const fetchArchitecture = async (retryCount = 0) => {
+    if (!currentProject?._id) {
+      console.log("[TechStack] No current project ID");
+      setIsLoading(false);
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      console.log(
+        `[TechStack] Fetching architecture data (attempt ${retryCount + 1}/${
+          MAX_RETRIES + 1
+        })`
+      );
+      const architectureResponse = await fetch(
+        `http://localhost:8080/tech-architecture/generate-architecture-diagram/${currentProject._id}`,
+        {
+          credentials: "include",
+          headers: { Accept: "application/json" },
+        }
+      );
+
+      if (!architectureResponse.ok) {
+        // If we haven't exceeded max retries and got a 500/400 error, retry
+        if (
+          retryCount < MAX_RETRIES &&
+          (architectureResponse.status === 500 ||
+            architectureResponse.status === 400)
+        ) {
+          console.log(`[TechStack] Retrying in ${RETRY_DELAY}ms...`);
+          await new Promise((resolve) => setTimeout(resolve, RETRY_DELAY));
+          return fetchArchitecture(retryCount + 1);
+        }
+        throw new Error(
+          `Architecture fetch failed: ${architectureResponse.status}`
+        );
+      }
+
+      const architectureData = await architectureResponse.json();
+      setData((prev) => ({
+        ...prev,
+        architecture: architectureData,
+      }));
+    } catch (error) {
+      console.error("[TechStack] Error:", error);
+      setArchitectureError(
+        error instanceof Error ? error.message : "Error fetching architecture"
+      );
+    } finally {
+      setIsLoading(false);
+    }
+  };
   useEffect(() => {
     const fetchTechStack = async () => {
       if (!currentProject?._id) return;
 
+      console.log("this is the ", i++);
       try {
         const response = await fetch(
           `http://localhost:8080/tech-architecture/generate-tech-stack/${currentProject._id}`,
@@ -126,67 +184,6 @@ const AITechStack: React.FC = () => {
   useEffect(() => {
     console.log("[TechStack] Starting data fetch");
     let isMounted = true;
-
-    const fetchArchitecture = async () => {
-      if (!currentProject?._id) {
-        console.log("[TechStack] No current project ID");
-        setIsLoading(false);
-        return;
-      }
-
-      setIsLoading(true);
-      try {
-        console.log("[TechStack] Fetching architecture data");
-        const architectureResponse = await fetch(
-          `http://localhost:8080/tech-architecture/generate-architecture-diagram/${currentProject._id}`,
-          {
-            credentials: "include",
-            headers: { Accept: "application/json" },
-          }
-        );
-
-        if (!architectureResponse.ok) {
-          throw new Error(
-            `Architecture fetch failed: ${architectureResponse.status}`
-          );
-        }
-
-        const architectureData = await architectureResponse.json();
-        console.log("[TechStack] Architecture data received:", {
-          hasData: !!architectureData,
-          messageType: typeof architectureData.message,
-        });
-
-        if (isMounted) {
-          // Convert the diagram data
-          const mermaidCode = convertJsonToMermaid({
-            diagram: architectureData.architectureDiagram.diagramData,
-          });
-          console.log("[TechStack] Converted to Mermaid:", {
-            codeLength: mermaidCode.length,
-            firstLine: mermaidCode.split("\n")[0],
-          });
-
-          setData((prev) => ({
-            ...prev,
-            architecture: architectureData,
-          }));
-        }
-      } catch (error) {
-        console.error("[TechStack] Error:", error);
-        if (isMounted) {
-          setArchitectureError(
-            error instanceof Error
-              ? error.message
-              : "Error fetching architecture"
-          );
-        }
-      } finally {
-        if (isMounted) {
-          setIsLoading(false);
-        }
-      }
-    };
 
     fetchArchitecture();
     return () => {
@@ -327,6 +324,20 @@ const AITechStack: React.FC = () => {
     );
   }
 
+  if (architectureError) {
+    return (
+      <div className="text-center">
+        <p className="text-red-600">Failed after {MAX_RETRIES + 1} attempts</p>
+        <button
+          onClick={() => fetchArchitecture(0)}
+          className="mt-4 px-4 py-2 bg-blue-500 text-white rounded"
+        >
+          Try Again
+        </button>
+      </div>
+    );
+  }
+
   return (
     <div className="max-w-7xl mx-auto p-8">
       <h2 className="text-3xl font-bold text-gray-800 text-center mb-8">
@@ -413,9 +424,10 @@ const AITechStack: React.FC = () => {
               {userData?.role && userData.role === "junior" && (
                 <button
                   onClick={handleRegenerateArchitecture}
-                  className="px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-md transition-colors"
+                  className="flex items-center gap-2 px-4 py-2 text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded-md transition-colors duration-200"
                 >
-                  Regenerate Diagram
+                  <RefreshCw className="w-4 h-4" />
+                  <span>Re-Generate</span>
                 </button>
               )}
             </div>
@@ -435,9 +447,10 @@ const AITechStack: React.FC = () => {
                 {userData?.role && userData.role !== "junior" && (
                   <button
                     onClick={handleRegenerateArchitecture}
-                    className="px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-md transition-colors"
+                    className="flex items-center gap-2 px-4 py-2 text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded-md transition-colors duration-200 cursor-pointer"
                   >
-                    Regenerate Diagram
+                    <RefreshCw className="w-4 h-4" />
+                    <span>Re-Generate</span>
                   </button>
                 )}
               </div>

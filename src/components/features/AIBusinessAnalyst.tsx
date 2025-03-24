@@ -1,7 +1,14 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { User, ChevronRight, X, ArrowDown, CheckCircle } from "lucide-react";
+import {
+  User,
+  ChevronRight,
+  X,
+  ArrowDown,
+  CheckCircle,
+  RefreshCw,
+} from "lucide-react";
 import { useProject } from "@/context/ProjectContext";
 import Slider from "react-slick";
 import "slick-carousel/slick/slick.css";
@@ -42,9 +49,9 @@ interface Persona {
   workflows: Workflow[];
 }
 
-interface BusinessAnalysisData {
-  personas: Persona[];
-}
+// interface BusinessAnalysisData {
+//   personas: Persona[];
+// }
 
 interface UserPersonaResponse {
   message: string;
@@ -249,10 +256,21 @@ export default function AIBusinessAnalyst() {
 
   return (
     <div className="max-w-7xl mx-auto space-y-12">
-      <h2 className="text-2xl font-bold text-gray-800 mb-6">
-        User Personas & Workflows
-      </h2>
-
+      <div className="flex items-center justify-between mb-6">
+        <h2 className="text-2xl font-bold text-gray-800 mb-6">
+          User Personas & Workflows
+        </h2>
+        <button
+          onClick={() => {
+            // TODO: Implement regeneration logic
+            console.log("Regenerating user personas...");
+          }}
+          className="flex items-center gap-2 px-4 py-2 text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded-md transition-colors duration-200 cursor-pointer"
+        >
+          <RefreshCw className="w-4 h-4" />
+          <span>Re-Generate</span>
+        </button>
+      </div>
       <div
         className={`grid ${
           selectedWorkflow ? "grid-cols-2" : "md:grid-cols-3"
