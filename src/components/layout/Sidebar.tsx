@@ -4,10 +4,18 @@ import { useRouter, usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Menu, X, Plus, Trash2, Edit } from "lucide-react";
 
+interface Requirement {
+  _id: string;
+  title: string;
+  description: string;
+  status: string;
+  priority: string;
+}
+
 interface Project {
   _id: string;
   name: string;
-  requirements: any[];
+  requirements: Requirement[];
   createdBy: string;
   assignedUsers: string[];
   createdAt: string;
@@ -22,7 +30,7 @@ interface UserData {
 interface CreateProjectResponse {
   _id: string;
   name: string;
-  requirements: any[];
+  requirements: Requirement[];
   createdBy: string;
   assignedUsers: string[];
   createdAt: string;

@@ -17,34 +17,21 @@ import {
   flexRender,
 } from "@tanstack/react-table";
 
+// Define types outside component
 interface EstimationResponse {
   message: string;
   effortEstimationUrl: string;
 }
 
+interface ExcelData {
+  [key: string]: string | number;
+}
+
 interface ExcelSheet {
   sheetName: string;
-  data: any[];
-  columns: any[];
+  data: ExcelData[];
+  columns: any[]; // We'll keep this any since it's from TanStack Table
 }
-
-interface EstimationData {
-  // Define your types here
-  sheetName: string;
-  data: Record<string, unknown>;
-}
-
-// Define proper types for state
-interface Sheet {
-  sheetName: string;
-  data: Record<string, unknown>;
-}
-
-const [sheets, setSheets] = useState<Sheet[]>([]);
-const [activeSheetName, setActiveSheetName] = useState<string | null>(null);
-
-// Replace 'any' with proper types
-const [data, setData] = useState<EstimationData[]>([]);
 
 export default function EffortAndCost() {
   const { currentProject } = useProject();
@@ -55,6 +42,9 @@ export default function EffortAndCost() {
   const [isViewing, setIsViewing] = useState(false);
   const [isRegenerating, setIsRegenerating] = useState(false);
 
+  // Type-safe column helper
+  const columnHelper = createColumnHelper<ExcelData>();
+
   const buttonText = isViewing
     ? isLoading
       ? "Loading..."
@@ -62,6 +52,26 @@ export default function EffortAndCost() {
     : isLoading
     ? "Loading..."
     : "View Estimation";
+
+  const processExcelData = (workbook: XLSX.WorkBook): ExcelSheet[] => {
+    return workbook.SheetNames.map((sheetName) => {
+      const worksheet = workbook.Sheets[sheetName];
+      const jsonData = XLSX.utils.sheet_to_json(worksheet) as ExcelData[];
+
+      const columns =
+        jsonData.length > 0
+          ? Object.keys(jsonData[0]).map((key) =>
+              columnHelper.accessor(key, { header: key })
+            )
+          : [];
+
+      return {
+        sheetName,
+        data: jsonData,
+        columns,
+      };
+    }).filter((sheet) => sheet.data.length > 0);
+  };
 
   const handleView = async () => {
     if (isViewing) {
@@ -90,25 +100,7 @@ export default function EffortAndCost() {
       const buffer = await blob.arrayBuffer();
 
       const workbook = XLSX.read(buffer, { type: "array" });
-      const columnHelper = createColumnHelper<any>();
-
-      const processedSheets = workbook.SheetNames.map((sheetName) => {
-        const worksheet = workbook.Sheets[sheetName];
-        const jsonData = XLSX.utils.sheet_to_json(worksheet);
-
-        const columns =
-          jsonData.length > 0
-            ? Object.keys(jsonData[0] as Record<string, any>).map((key) =>
-                columnHelper.accessor(key, { header: key })
-              )
-            : [];
-
-        return {
-          sheetName,
-          data: jsonData,
-          columns,
-        };
-      }).filter((sheet) => sheet.data.length > 0); // Filter out empty sheets
+      const processedSheets = processExcelData(workbook);
 
       if (processedSheets.length === 0) {
         throw new Error("No data found in the estimation file");

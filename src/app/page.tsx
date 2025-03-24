@@ -437,8 +437,8 @@ export default function LandingPage() {
                 className="bg-white rounded-xl p-6 shadow-lg hover:shadow-xl hover:scale-[1.02] transition-all duration-300"
               >
                 <p className="text-gray-700 mb-4 italic">
-                  "This tool has streamlined our proposal process, saving us
-                  countless hours and improving accuracy."
+                  &ldquo;This tool has streamlined our proposal process, saving
+                  us countless hours and improving accuracy.&rdquo;
                 </p>
                 <p className="text-gray-900 font-semibold">
                   - Alex Johnson, Sales Manager
@@ -451,8 +451,8 @@ export default function LandingPage() {
                 className="bg-white rounded-xl p-6 shadow-lg hover:shadow-xl hover:scale-[1.02] transition-all duration-300"
               >
                 <p className="text-gray-700 mb-4 italic">
-                  "The AI-generated wireframes and cost estimations have been a
-                  game-changer for our team."
+                  &ldquo;The AI-generated wireframes and cost estimations have
+                  been a game-changer for our team.&rdquo;
                 </p>
                 <p className="text-gray-900 font-semibold">
                   - Sarah Lee, Project Lead
