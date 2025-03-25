@@ -1,7 +1,12 @@
-"uuse client";
-import React, { useEffect, useState, useMemo } from "react";
+"use client";
+import React, {
+  useEffect,
+  useState,
+  useMemo,
+  useCallback,
+  useRef,
+} from "react";
 import { RefreshCw } from "lucide-react";
-import { useRouter } from "next/navigation";
 import { useProject } from "@/context/ProjectContext";
 import MermaidDiagram from "../ui/MermaidDiagram";
 import { convertJsonToMermaid } from "@/utils/mermaidConverter";
@@ -63,7 +68,6 @@ interface UserData {
 }
 
 const AITechStack: React.FC = () => {
-  const router = useRouter();
   const { currentProject } = useProject();
   const [isLoading, setIsLoading] = useState(true);
   const [techStackError, setTechStackError] = useState<string>("");
@@ -86,71 +90,77 @@ const AITechStack: React.FC = () => {
 
   useEffect(() => {
     const userDataString = localStorage.getItem("userData");
-    if (userDataString) {
+    if (typeof window !== "undefined" && userDataString) {
       const parsedUserData = JSON.parse(userDataString);
       setUserData(parsedUserData);
     }
   }, []);
 
   // Tech Stack Fetch
-  let i = 1;
-  const fetchArchitecture = async (retryCount = 0) => {
-    if (!currentProject?._id) {
-      console.log("[TechStack] No current project ID");
-      setIsLoading(false);
-      return;
-    }
-
-    setIsLoading(true);
-    try {
-      console.log(
-        `[TechStack] Fetching architecture data (attempt ${retryCount + 1}/${
-          MAX_RETRIES + 1
-        })`
-      );
-      const architectureResponse = await fetch(
-        `${process.env.NEXT_PUBLIC_BACKEND_URL}/tech-architecture/generate-architecture-diagram/${currentProject._id}`,
-        {
-          credentials: "include",
-          headers: { Accept: "application/json" },
-        }
-      );
-
-      if (!architectureResponse.ok) {
-        // If we haven't exceeded max retries and got a 500/400 error, retry
-        if (
-          retryCount < MAX_RETRIES &&
-          (architectureResponse.status === 500 ||
-            architectureResponse.status === 400)
-        ) {
-          console.log(`[TechStack] Retrying in ${RETRY_DELAY}ms...`);
-          await new Promise((resolve) => setTimeout(resolve, RETRY_DELAY));
-          return fetchArchitecture(retryCount + 1);
-        }
-        throw new Error(
-          `Architecture fetch failed: ${architectureResponse.status}`
-        );
+  const [fetchCount, setFetchCount] = useState(1);
+  const fetchArchitecture = useCallback(
+    async (retryCount = 0) => {
+      if (!currentProject?._id) {
+        console.log("[TechStack] No current project ID");
+        setIsLoading(false);
+        return;
       }
 
-      const architectureData = await architectureResponse.json();
-      setData((prev) => ({
-        ...prev,
-        architecture: architectureData,
-      }));
-    } catch (error) {
-      console.error("[TechStack] Error:", error);
-      setArchitectureError(
-        error instanceof Error ? error.message : "Error fetching architecture"
-      );
-    } finally {
-      setIsLoading(false);
-    }
-  };
+      setIsLoading(true);
+      try {
+        console.log(
+          `[TechStack] Fetching architecture data (attempt ${retryCount + 1}/${
+            MAX_RETRIES + 1
+          })`
+        );
+        const architectureResponse = await fetch(
+          `${process.env.NEXT_PUBLIC_BACKEND_URL}/tech-architecture/generate-architecture-diagram/${currentProject._id}`,
+          {
+            credentials: "include",
+            headers: { Accept: "application/json" },
+          }
+        );
+
+        if (!architectureResponse.ok) {
+          // If we haven't exceeded max retries and got a 500/400 error, retry
+          if (
+            retryCount < MAX_RETRIES &&
+            (architectureResponse.status === 500 ||
+              architectureResponse.status === 400)
+          ) {
+            console.log(`[TechStack] Retrying in ${RETRY_DELAY}ms...`);
+            await new Promise((resolve) => setTimeout(resolve, RETRY_DELAY));
+            return fetchArchitecture(retryCount + 1);
+          }
+          throw new Error(
+            `Architecture fetch failed: ${architectureResponse.status}`
+          );
+        }
+
+        const architectureData = await architectureResponse.json();
+        setData((prev) => ({
+          ...prev,
+          architecture: architectureData,
+        }));
+      } catch (error) {
+        console.error("[TechStack] Error:", error);
+        setArchitectureError(
+          error instanceof Error ? error.message : "Error fetching architecture"
+        );
+      } finally {
+        setIsLoading(false);
+      }
+    },
+    [currentProject?._id, MAX_RETRIES, RETRY_DELAY]
+  );
+
+  const i = useRef(0);
   useEffect(() => {
     const fetchTechStack = async () => {
       if (!currentProject?._id) return;
 
-      console.log("this is the ", i++);
+      console.log("this is the ", fetchCount);
+      setFetchCount((prev) => prev + 1);
       try {
         const response = await fetch(
           `${process.env.NEXT_PUBLIC_BACKEND_URL}/tech-architecture/generate-tech-stack/${currentProject._id}`,
@@ -178,18 +188,15 @@ const AITechStack: React.FC = () => {
     };
 
     fetchTechStack();
-  }, [currentProject?._id]);
+    i.current += 1;
+  }, [i, currentProject?._id, fetchCount]);
 
   // Architecture Diagram Fetch
   useEffect(() => {
     console.log("[TechStack] Starting data fetch");
-    let isMounted = true;
 
     fetchArchitecture();
-    return () => {
-      isMounted = false;
-    };
-  }, [currentProject?._id]);
+  }, [currentProject?._id, fetchArchitecture]);
 
   const handleRetryArchitecture = async () => {
     setArchitectureError("");

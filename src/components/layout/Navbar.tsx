@@ -1,5 +1,4 @@
-import Image from "next/image";
-import { User, Bell, Settings, LogOut, Home } from "lucide-react";
+import { User, Settings, LogOut, Home } from "lucide-react";
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";

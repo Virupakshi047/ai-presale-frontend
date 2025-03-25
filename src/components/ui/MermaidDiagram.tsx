@@ -64,7 +64,7 @@ const MermaidDiagram: React.FC<MermaidDiagramProps> = ({
     };
 
     renderDiagram();
-  }, [chart]);
+  }, [chart, renderAttempts]);
 
   return (
     <div className="relative">

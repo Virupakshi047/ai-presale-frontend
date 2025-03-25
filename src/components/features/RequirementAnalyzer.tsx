@@ -33,11 +33,6 @@ interface AnalysisResult {
   featureBreakdown: Module[];
 }
 
-interface AnalysisResponse {
-  message: string;
-  data: AnalysisResult;
-}
-
 interface LoggedUserData {
   name: string;
   email: string;
@@ -112,7 +107,6 @@ export default function RequirementAnalyzer() {
   const [requirementText, setRequirementText] = useState<string>("");
   const [error, setError] = useState<string>("");
   const [isLoading, setIsLoading] = useState(false);
-  const [success, setSuccess] = useState<string>("");
   const [showInputSection, setShowInputSection] = useState(true);
   const [analysisResults, setAnalysisResults] = useState<AnalysisResult | null>(
     null
@@ -214,7 +208,6 @@ export default function RequirementAnalyzer() {
     setSelectedFile(null);
     setRequirementText("");
     setError("");
-    setSuccess("");
     setActiveFeature({
       moduleIndex: null,
       featureIndex: null,
@@ -280,7 +273,6 @@ export default function RequirementAnalyzer() {
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setError("");
-    setSuccess("");
     if (event.target.files && event.target.files.length > 0) {
       const file = event.target.files[0];
       const allowedTypes = [
@@ -314,7 +306,6 @@ export default function RequirementAnalyzer() {
 
     setIsLoading(true);
     setError("");
-    setSuccess("");
 
     const techStackWithCustom = {
       frontend: [
@@ -355,9 +346,6 @@ export default function RequirementAnalyzer() {
       if (!response.ok) {
         throw new Error("Please Upload a file");
       }
-
-      const result: AnalysisResponse = await response.json();
-      setSuccess(result.message);
       setSelectedFile(null);
       setRequirementText("");
 
@@ -416,7 +404,6 @@ export default function RequirementAnalyzer() {
                 setSelectedFile(null);
                 setRequirementText("");
                 setError("");
-                setSuccess("");
               }}
               className="p-3 bg-gray-600 text-white rounded-full shadow-lg hover:bg-gray-700 transition-colors duration-200"
               title="Cancel modification"
@@ -526,23 +513,43 @@ export default function RequirementAnalyzer() {
                       activeFeature.moduleIndex === moduleIndex &&
                       activeFeature.featureIndex === featureIndex;
 
+                    function handleFeatureClick(
+                      moduleIndex: number,
+                      featureIndex: number,
+                      description: string
+                    ): void {
+                      setActiveFeature((prev) => {
+                        // If clicking the same feature, toggle it off
+                        if (
+                          prev.moduleIndex === moduleIndex &&
+                          prev.featureIndex === featureIndex
+                        ) {
+                          return {
+                            moduleIndex: null,
+                            featureIndex: null,
+                            subfeatureIndex: null,
+                            description: "",
+                          };
+                        }
+                        // Otherwise, set the new active feature
+                        return {
+                          moduleIndex,
+                          featureIndex,
+                          subfeatureIndex: null,
+                          description,
+                        };
+                      });
+                    }
+
                     return (
                       <div key={featureIndex} className="relative">
                         <div
                           className="p-4 border border-gray-200 rounded-lg hover:border-blue-500 transition-all duration-200 cursor-pointer bg-white"
                           onClick={() =>
-                            setActiveFeature((prev) =>
-                              isActive
-                                ? {
-                                    moduleIndex: null,
-                                    featureIndex: null,
-                                    description: "",
-                                  }
-                                : {
-                                    moduleIndex,
-                                    featureIndex,
-                                    description: feature.description,
-                                  }
+                            handleFeatureClick(
+                              moduleIndex,
+                              featureIndex,
+                              feature.description
                             )
                           }
                         >

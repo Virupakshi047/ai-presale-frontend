@@ -1,28 +1,16 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import RequirementAnalyzer from "../features/RequirementAnalyzer";
 import AITechStack from "../features/TechStack";
 import { useProject } from "@/context/ProjectContext";
 import AIBusinessAnalyst from "../features/AIBusinessAnalyst";
 import EffortAndCost from "@/components/features/EffortAndCost";
-import { History, ChevronDown, ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 import WireframeCanvas from "@/components/features/WireframeCanvas";
 import AssignProject from "../features/AssignProject";
-import { Toaster } from "react-hot-toast";
-
-interface FeatureBreakdown {
-  component: string;
-  description: string;
-}
-
-interface AnalysisResult {
-  message: string;
-  functionalRequirement: string[];
-  nonFunctionalRequirement: string[];
-  featureBreakdown: FeatureBreakdown[];
-}
+// import { Toaster } from "react-hot-toast";
 
 interface UserData {
   name: string;
@@ -32,9 +20,6 @@ interface UserData {
 
 export default function MainBody() {
   const [activeTab, setActiveTab] = useState("requirementAnalysis");
-  const [analysisResults, setAnalysisResults] = useState<AnalysisResult | null>(
-    null
-  );
   const [userData, setUserData] = useState<UserData | null>(null);
   // const [showVersions, setShowVersions] = useState(false);
   const pathname = usePathname();
@@ -76,9 +61,6 @@ export default function MainBody() {
       : []),
     { id: "feature4", label: "Wireframe & UI" },
   ];
-  const handleAnalysisResults = (results: AnalysisResult) => {
-    setAnalysisResults(results);
-  };
 
   // Add loading state for better UX
   if (projects.length > 0 && !currentProject) {
