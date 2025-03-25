@@ -19,12 +19,6 @@ interface LoginResponse {
   };
 }
 
-interface UserData {
-  name: string;
-  email: string;
-  role: string;
-}
-
 export default function LoginPage() {
   const router = useRouter();
   const [showPassword, setShowPassword] = useState(false);
@@ -63,15 +57,7 @@ export default function LoginPage() {
       }
 
       // Store user data in localStorage
-      const userData: UserData = {
-        name: data.user.name,
-        email: data.user.email,
-        role: data.user.role,
-      };
       // Example: Fixing localStorage Error
-      if (typeof window !== "undefined") {
-        const user = localStorage.getItem("userData");
-      }
 
       // Check if user is head and redirect accordingly
       if (
