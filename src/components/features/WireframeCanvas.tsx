@@ -6,6 +6,7 @@ import { ChevronLeft, ChevronRight, Maximize2, Minimize2 } from "lucide-react";
 
 // Module-level flag to ensure fetch happens only once per project ID
 const fetchedProjects: Record<string, boolean> = {};
+const imageCache: Record<string, string[]> = {};
 
 interface WireframeResponse {
   message: string;
@@ -25,10 +26,21 @@ export default function WireframeCanvas() {
   const [isFullscreen, setIsFullscreen] = useState(false);
 
   useEffect(() => {
-    const fetchWireframes = async () => {
+    const loadWireframes = async () => {
       if (!currentProject?._id) return;
-      // If we've already fetched for this project, exit
-      if (fetchedProjects[currentProject._id]) return;
+
+      // First check if images are in cache
+      if (imageCache[currentProject._id]) {
+        setImages(imageCache[currentProject._id]);
+        setIsLoading(false);
+        return;
+      }
+
+      // If not in cache and already fetched, skip fetching
+      if (fetchedProjects[currentProject._id]) {
+        setIsLoading(false);
+        return;
+      }
 
       // Mark this project as fetched
       fetchedProjects[currentProject._id] = true;
@@ -46,6 +58,8 @@ export default function WireframeCanvas() {
         }
 
         const data: WireframeResponse = await response.json();
+        // Store in cache
+        imageCache[currentProject._id] = data.wireframe.image_link;
         setImages(data.wireframe.image_link);
       } catch (err) {
         setError(
@@ -56,21 +70,13 @@ export default function WireframeCanvas() {
       }
     };
 
-    fetchWireframes();
-    // We don't add a cleanup here because we want the flag to persist
+    loadWireframes();
   }, [currentProject?._id]);
 
-  const handlePrevious = () => {
-    setCurrentIndex((prev) => (prev > 0 ? prev - 1 : prev));
-  };
-
-  const handleNext = () => {
-    setCurrentIndex((prev) => (prev < images.length - 1 ? prev + 1 : prev));
-  };
-
-  const toggleFullscreen = () => {
-    setIsFullscreen(!isFullscreen);
-  };
+  // Reset current index when switching projects
+  useEffect(() => {
+    setCurrentIndex(0);
+  }, [currentProject?._id]);
 
   if (isLoading) {
     return (
