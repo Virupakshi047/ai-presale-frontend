@@ -89,7 +89,8 @@ const AITechStack: React.FC = () => {
   }, [data.architecture]); // Debug log to check what data we have
 
   useEffect(() => {
-    const userDataString = localStorage.getItem("userData");
+    const userDataString =
+      typeof window !== "undefined" ? localStorage.getItem("userData") : null;
     if (typeof window !== "undefined" && userDataString) {
       const parsedUserData = JSON.parse(userDataString);
       setUserData(parsedUserData);

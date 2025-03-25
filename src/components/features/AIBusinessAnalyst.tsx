@@ -110,7 +110,10 @@ export default function AIBusinessAnalyst() {
       setIsLoading(true);
       try {
         // First, check if we have a valid token in localStorage
-        const userData = localStorage.getItem("userData");
+        const userData =
+          typeof window !== "undefined"
+            ? localStorage.getItem("userData")
+            : null;
         if (!userData) {
           throw new Error("No authentication data found");
         }

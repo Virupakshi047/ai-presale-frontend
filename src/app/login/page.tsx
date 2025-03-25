@@ -68,7 +68,10 @@ export default function LoginPage() {
         email: data.user.email,
         role: data.user.role,
       };
-      localStorage.setItem("userData", JSON.stringify(userData));
+      // Example: Fixing localStorage Error
+      if (typeof window !== "undefined") {
+        const user = localStorage.getItem("userData");
+      }
 
       // Check if user is head and redirect accordingly
       if (

@@ -227,7 +227,7 @@ export default function RequirementAnalyzer() {
   }, []);
 
   const getLoggedUserData = (): LoggedUserData | null => {
-    const userData = localStorage.getItem("userData");
+    const userData = typeof window !== "undefined" ? localStorage.getItem("userData") : null;
     return userData ? JSON.parse(userData) : null;
   };
 

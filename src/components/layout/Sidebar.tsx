@@ -50,7 +50,8 @@ export default function Sidebar() {
 
   const router = useRouter();
   const pathname = usePathname();
-  const token = localStorage.getItem("authToken");
+  const token =
+    typeof window !== "undefined" ? localStorage.getItem("authToken") : null;
 
   useEffect(() => {
     const fetchProjects = async () => {
@@ -108,7 +109,8 @@ export default function Sidebar() {
     if (typeof window === "undefined") {
       return null;
     }
-    const userData = localStorage.getItem("userData");
+    const userData =
+      typeof window !== "undefined" ? localStorage.getItem("userData") : null;
     return userData ? JSON.parse(userData) : null;
   };
 

@@ -45,7 +45,8 @@ export default function MainBody() {
   }, [pathname, projects, setCurrentProject, router]);
 
   useEffect(() => {
-    const userDataString = localStorage.getItem("userData");
+    const userDataString =
+      typeof window !== "undefined" ? localStorage.getItem("userData") : null;
     if (userDataString) {
       const parsedUserData = JSON.parse(userDataString);
       setUserData(parsedUserData);

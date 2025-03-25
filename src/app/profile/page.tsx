@@ -15,12 +15,14 @@ export default function ProfilePage() {
   const router = useRouter();
 
   useEffect(() => {
-    const storedData = localStorage.getItem("userData");
-    if (!storedData) {
-      router.push("/login");
-      return;
+    if (typeof window !== "undefined") {
+      const storedData = localStorage.getItem("userData");
+      if (!storedData) {
+        router.push("/login");
+        return;
+      }
+      setUserData(JSON.parse(storedData));
     }
-    setUserData(JSON.parse(storedData));
   }, [router]);
 
   if (!userData) return null;

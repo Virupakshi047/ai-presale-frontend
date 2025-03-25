@@ -15,7 +15,8 @@ export default function Navbar() {
   const router = useRouter();
 
   useEffect(() => {
-    const storedData = localStorage.getItem("userData");
+    const storedData =
+      typeof window !== "undefined" ? localStorage.getItem("userData") : null;
     if (storedData) {
       setUserData(JSON.parse(storedData));
     }
