@@ -1,4 +1,4 @@
-# AI Presale Frontend
+# AI-Powered Presales Automation Frontend
 
 Welcome to the **AI Presale Frontend** repository! This project serves as the frontend interface for the AI-powered presales automation system, offering users an intuitive, responsive, and efficient way to interact with backend services, input client requirements, and receive valuable AI-generated insights.
 
